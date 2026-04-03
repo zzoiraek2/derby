@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>십이지신 어센션 - 리롤/승급/투자</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" crossorigin />
+<link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0d1020; --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.09); --text:#f8fafc; --muted:#b9c2d8;
+  --brand:#889ADF; --brand2:#5C6AC4; --gold:#fbbf24; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  --shadow:0 18px 40px rgba(0,0,0,.28); font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:radial-gradient(circle at top,#20284f 0%,#13182e 42%,#0d1020 100%);color:var(--text)}
+body{display:flex;justify-content:center;align-items:center}
+.app{
+  width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (min-width:780px){
+  body{padding:20px}
+  .app{width:392px;height:min(844px,calc(100vh - 40px));border-radius:38px;box-shadow:0 28px 90px rgba(0,0,0,.38)}
+}
+.header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.05);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0))}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.title{font-size:22px;font-weight:900;letter-spacing:-.03em;margin:20px 6px 6px}
+.subtitle{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted);font-weight:800}
+.bestbox{padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:68px;text-align:right}
+.bestbox .k{font-size:10px;color:var(--muted);font-weight:900}
+.bestbox .v{margin-top:4px;font-size:18px;font-weight:900;color:var(--gold)}
+.bestbox.safe .v{color:#86efac}
+.bestbox.warn .v{color:#fde68a}
+.bestbox.danger .v{color:#fca5a5}
+.main{flex:1;overflow:auto;padding:12px 14px 110px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:22px;padding:12px;box-shadow:var(--shadow);margin-bottom:10px;backdrop-filter:blur(16px)}
+.section-title{margin:0 0 9px;font-size:12px;font-weight:900;color:#dbe5ff}
+.topstats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.stat{padding:9px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.035)}
+.stat .k{font-size:10px;color:var(--muted);font-weight:900}
+.stat .v{margin-top:5px;font-size:18px;font-weight:900}
+.span4{grid-column:span 4}
+.bar{height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-top:8px}
+.fill{height:100%;width:100%;background:linear-gradient(90deg,#f7c948,#f59e0b);transition:width .22s ease}
+.center-card{text-align:center;padding:12px;border-radius:22px;background:linear-gradient(180deg,rgba(92,106,196,.14),rgba(92,106,196,.05));border:1px solid rgba(136,154,223,.18)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.stage-pill,.rarity-pill,.money-pill{padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}
+.stage-pill{background:rgba(255,255,255,.08)}
+.money-pill{background:rgba(251,191,36,.15);color:#fde68a}
+.rarity-pill.common{background:rgba(255,255,255,.08);color:#dbe5ff}
+.rarity-pill.rare{background:rgba(96,165,250,.18);color:#bfdbfe}
+.rarity-pill.epic{background:rgba(168,85,247,.18);color:#ddd6fe}
+.rarity-pill.legend{background:rgba(251,191,36,.18);color:#fde68a}
+.emoji{font-size:54px;line-height:1}
+.name{margin-top:4px;font-size:28px;font-weight:900;letter-spacing:-.04em}
+.desc{margin-top:5px;font-size:12px;color:var(--muted);font-weight:800;line-height:1.5}
+.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.rate-box{padding:10px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.rate-box .label{font-size:10px;color:var(--muted);font-weight:900}
+.rate-box .num{margin-top:5px;font-size:24px;font-weight:900}
+.rate-box.success .num{color:#86efac}
+.rate-box.stay .num{color:#fde68a}
+.rate-box.fail .num{color:#fca5a5}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:10px;font-weight:900;color:#d2dbef;border:1px solid rgba(255,255,255,.05)}
+.tag.good{background:rgba(34,197,94,.16);color:#86efac}
+.tag.warn{background:rgba(245,158,11,.16);color:#fdba74}
+.tag.bad{background:rgba(239,68,68,.16);color:#fca5a5}
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.btn{min-height:48px;border:none;border-radius:14px;font-size:14px;font-weight:900;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#7287f2,#5C6AC4);color:#fff}
+.btn.secondary{background:rgba(255,255,255,.04);color:#fff;border:1px solid var(--line)}
+.btn.gold{background:linear-gradient(180deg,#f7c948,#f59e0b);color:#281500}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.item{padding:10px 11px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);margin-bottom:8px}
+.item .name{font-size:13px;font-weight:900}
+.item .sub{margin-top:5px;font-size:11px;line-height:1.5;color:var(--muted);font-weight:800}
+.footer{
+  position:absolute;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  padding:11px;border-radius:20px;background:rgba(12,16,32,.84);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)
+}
+.footer-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.footer-title{font-size:13px;font-weight:900}.footer-desc{margin-top:7px;font-size:11px;line-height:1.45;color:var(--muted);font-weight:800}
+.pill{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.08);font-size:10px;font-weight:900}
+.toast{
+  position:fixed; left:14px; right:14px; bottom:92px;
+  padding:12px 14px; border-radius:16px;
+  background:rgba(12,16,32,.96); border:1px solid rgba(255,255,255,.14);
+  color:var(--text); font-size:12px; font-weight:900; line-height:1.45;
+  opacity:0; transform:translateY(8px); pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+  z-index:120; backdrop-filter:blur(10px);
+  box-shadow:0 12px 28px rgba(0,0,0,.32);
+}
+.toast.show{opacity:1; transform:translateY(0)}
+
+.event-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:115;
+  padding:18px;
+}
+.event-overlay.show{display:flex}
+.event-hero{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:96px;
+  margin:4px 0 10px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.event-hero.success{background:linear-gradient(180deg, rgba(34,197,94,.12), rgba(34,197,94,.05))}
+.event-hero.stay{background:linear-gradient(180deg, rgba(245,158,11,.12), rgba(245,158,11,.05))}
+.event-hero.fail{background:linear-gradient(180deg, rgba(239,68,68,.12), rgba(239,68,68,.05))}
+.event-hero.reroll{background:linear-gradient(180deg, rgba(96,165,250,.12), rgba(96,165,250,.05))}
+.event-hero.invest{background:linear-gradient(180deg, rgba(251,191,36,.12), rgba(251,191,36,.05))}
+.event-emoji{
+  font-size:56px;
+  line-height:1;
+  transform:translateY(2px);
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.22));
+}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:60;padding:18px}
+.overlay.show{display:flex}
+.modal{width:min(100%,430px);background:linear-gradient(180deg,#1a2037,#14192d);border:1px solid rgba(255,255,255,.08);border-radius:28px;box-shadow:0 26px 64px rgba(0,0,0,.48);padding:18px}
+.modal h3{margin:0 0 8px;font-size:26px;font-weight:900}
+.modal p{margin:0 0 12px;font-size:13px;line-height:1.6;color:var(--muted);font-weight:800}
+.big-red{color:#ff7b7b}
+.result-box{
+  padding:13px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);margin-top:10px;
+  overflow:hidden;
+}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.score-card{padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.score-card .k{font-size:11px;color:#b9c2d8;font-weight:900}
+.score-card .v{margin-top:4px;font-size:16px;font-weight:900}
+.result-line{
+  font-size:14px;font-weight:900;margin-bottom:6px;line-height:1.45;
+  word-break:keep-all; overflow-wrap:anywhere;
+}
+.failure-hero{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; min-height:96px; margin:4px 0 10px;
+  border-radius:18px; border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg, rgba(251,113,133,.12), rgba(239,68,68,.06));
+  overflow:hidden;
+}
+.failure-hero .emoji{
+  font-size:56px; line-height:1; transform:translateY(2px);
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.22));
+}
+
+.history-list{display:grid;gap:10px}
+.history-card{padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.history-card.win{border-color:rgba(134,239,172,.35);box-shadow:inset 0 0 0 1px rgba(134,239,172,.08)}
+.history-card.lose{border-color:rgba(251,113,133,.28);box-shadow:inset 0 0 0 1px rgba(251,113,133,.06)}
+.history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.history-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:.02em}
+.history-badge.win{background:rgba(34,197,94,.16);color:#86efac}
+.history-badge.lose{background:rgba(239,68,68,.16);color:#fda4af}
+.history-step{font-size:12px;font-weight:900;color:var(--text)}
+.history-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.history-mini{padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+.history-mini .k{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}
+.history-mini .v{font-size:13px;font-weight:900}
+.history-reason{font-size:12px;line-height:1.5;color:var(--muted);font-weight:700}
+@media (max-width:640px){.history-meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="title">십이지신 어센션</div>
+
+      </div>
+      <div class="bestbox">
+        <div class="k" id="bestLabel">생존 상태</div>
+        <div class="v" id="bestValue">안정</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <div class="section-title">현재 상태</div>
+      <div class="topstats">
+        <div class="stat"><div class="k">라운드</div><div class="v" id="roundValue">1</div></div>
+        <div class="stat"><div class="k">단계</div><div class="v" id="stageValue">1</div></div>
+        <div class="stat"><div class="k">골드</div><div class="v" id="goldValue">0</div></div>
+        <div class="stat"><div class="k">연승</div><div class="v" id="comboValue">0</div></div>
+        <div class="stat span4"><div class="k">남은 리롤 횟수</div><div class="v" id="rerollLeftValue">0회</div></div>
+<div class="stat span4">
+          <div class="k">생존 게이지 <span id="hpText">0턴</span></div>
+          <div class="bar"><div class="fill" id="hpFill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">현재 승급 카드</div>
+      <div class="center-card">
+        <div class="card-top">
+          <div class="stage-pill" id="stagePill">1단계</div>
+          <div class="rarity-pill common" id="rarityPill">일반</div>
+          <div class="money-pill" id="cashoutValue">투자 보상 0G</div>
+        </div>
+        <div class="emoji" id="animalEmoji">🐭</div>
+        <div class="name" id="animalName">들쥐</div>
+        <div class="desc" id="animalDesc">리롤로 나온 개체의 확률만 보고 판단합니다. 좋은 카드면 승급, 대박 카드면 투자도 선택지입니다.</div>
+
+        <div class="rate-grid">
+          <div class="rate-box success">
+            <div class="label">성공</div>
+            <div class="num" id="successRate">85%</div>
+          </div>
+          <div class="rate-box stay">
+            <div class="label">유지</div>
+            <div class="num" id="stayRate">5%</div>
+          </div>
+          <div class="rate-box fail">
+            <div class="label">실패</div>
+            <div class="num" id="failRate">10%</div>
+          </div>
+        </div>
+
+        <div class="tags" id="cardTags"></div>
+
+        <div class="actions">
+          <button class="btn secondary" id="rerollBtn">리롤</button>
+          <button class="btn primary" id="upgradeBtn">승급</button>
+          <button class="btn gold" id="investBtn">투자</button>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <div class="card">
+      <div class="section-title">최근 기록</div>
+      <div class="history-list" id="recentHistoryList">
+        <div class="item"><div class="sub">아직 종료된 판이 없습니다. 죽었습니다 / 생존하였습니다 결과창을 닫으면 여기에 최근 기록이 남습니다.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">단계별 확률 규칙</div>
+      <div class="item">
+        <div class="name">리롤 개체 출현률</div>
+        <div class="sub">하급 46% · 일반 28% · 우수 16% · 희귀 8% · 전설 2%</div>
+      </div>
+      <div class="item">
+        <div class="name">리롤로 나올 수 있는 승급 확률 범위</div>
+        <div class="sub">
+          1단계 쥐: 70% ~ 94%<br>
+          2단계 소: 61% ~ 92%<br>
+          3단계 호랑이: 52% ~ 85%<br>
+          4단계 토끼: 43% ~ 76%<br>
+          5단계 용: 33% ~ 66%<br>
+          6단계 뱀: 24% ~ 57%<br>
+          7단계 말: 16% ~ 49%<br>
+          8단계 양: 9% ~ 42%<br>
+          9단계 원숭이: 3% ~ 36%<br>
+          10단계 닭: 1% ~ 31%<br>
+          11단계 개: 1% ~ 27%<br>
+          12단계 돼지: 1% ~ 23%
+        </div>
+      </div>
+      <div class="item">
+        <div class="name">단계별 유지비 / 리롤비 증가 (생존 턴 계산 기준)</div>
+        <div class="sub">
+          1단계: 유지 8 / 리롤 14<br>
+          2단계: 유지 15 / 리롤 26<br>
+          3단계: 유지 28 / 리롤 46<br>
+          4단계: 유지 48 / 리롤 78<br>
+          5단계: 유지 90 / 리롤 145<br>
+          6단계: 유지 170 / 리롤 280<br>
+          7단계: 유지 320 / 리롤 520<br>
+          8단계: 유지 620 / 리롤 980<br>
+          9단계: 유지 1300 / 리롤 2100<br>
+          10단계: 유지 5200 / 리롤 8400<br>
+          11단계: 유지 42000 / 리롤 70000<br>
+          12단계: 유지 360000 / 리롤 600000
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="name">단계별 기본 확률</div>
+        <div class="sub">
+          쥐 85 / 5 / 10<br>
+          소 76 / 10 / 14<br>
+          호랑이 67 / 15 / 18<br>
+          토끼 58 / 22 / 20<br>
+          용 48 / 30 / 22<br>
+          뱀 39 / 38 / 23<br>
+          말 31 / 46 / 23<br>
+          양 24 / 54 / 22<br>
+          원숭이 18 / 61 / 21<br>
+          닭 13 / 68 / 19<br>
+          개 9 / 75 / 16<br>
+          돼지 5 / 80 / 15
+          <br><br>
+          표기 순서: 성공 / 유지 / 실패
+        </div>
+      </div>
+      <div class="item">
+        <div class="name" id="costTitle">현재 단계 비용 / 투자금</div>
+        <div class="sub" id="costDesc">유지비 8G · 리롤비 14G · 기본 투자금 120G</div>
+      </div>
+    </div>
+
+    <div class="card">
+      
+  </div>
+
+  <div class="footer">
+    <div class="footer-top">
+      <div class="footer-title" id="footerTitle">초반은 승급이 잘 뜨지만</div>
+      <div class="pill" id="footerPill">1단계</div>
+    </div>
+    <div class="footer-desc" id="footerDesc">쥐는 유지가 5%부터 시작합니다. 돼지는 전설 개체여도 성공률이 낮고, 투자 보상 쪽이 더 중요합니다.</div>
+  </div>
+</div>
+
+
+
+<div class="event-overlay" id="eventOverlay">
+  <div class="modal">
+    <h3 id="eventTitle">이벤트</h3>
+    <div class="event-hero" id="eventHero"><div class="event-emoji" id="eventEmoji">✨</div></div>
+    <p id="eventDesc">결과 안내</p>
+    <div class="result-box" id="eventKv"></div>
+    <div class="actions" style="grid-template-columns:1fr;margin-top:14px">
+      <button class="btn primary" id="eventCloseBtn" style="width:100%">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="successOverlay">
+  <div class="modal">
+    <h3 style="color:#86efac">성공했습니다! 짝짝짝 🎉</h3>
+    <p id="successMessage">당신은 생존하셨습니다.<br><br>리롤의 유혹을 이겨내고,<br>투자의 타이밍을 읽고,<br>승급의 순간을 선택한 결과입니다.<br><br>이 게임은 확률이 아니라<br>선택의 게임이었습니다.</p>
+    <div class="result-box">
+      <div class="result-line" id="successRound">라운드 0</div>
+      <div class="result-line" id="successGold">잔여 골드 0</div>
+      <div class="result-line" id="successCombo">연승 0</div>
+      <div class="score-grid">
+        <div class="score-card"><div class="k">동물 점수</div><div class="v" id="successAnimalScore">0</div></div>
+        <div class="score-card"><div class="k">라운드 점수</div><div class="v" id="successRoundScore">0</div></div>
+        <div class="score-card"><div class="k">골드 환산</div><div class="v" id="successGoldScore">0</div></div>
+        <div class="score-card"><div class="k">최종 점수</div><div class="v" id="successTotalScore">0</div></div>
+      </div>
+    </div>
+    <div class="actions" style="grid-template-columns:1fr;margin-top:14px">
+      <button class="btn primary" id="successRetryBtn">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="deathOverlay">
+  <div class="modal">
+    <h3 class="big-red">죽었습니다...</h3>
+    <div class="failure-hero"><div class="emoji">💀</div></div>
+    <p>리롤비와 실패 손실로 운영자금이 바닥났습니다.</p>
+    <div class="result-box">
+      <div class="result-line" id="deathRound">라운드 0</div>
+      <div class="result-line" id="deathStage">단계 0</div>
+      <div class="result-line" id="deathGold">골드 0</div>
+      <div class="result-line" id="deathCombo">연승 0</div>
+      <div class="result-line" id="deathReason">실패 사유</div>
+      <div class="score-grid">
+        <div class="score-card"><div class="k">동물 점수</div><div class="v" id="animalScore">0</div></div>
+        <div class="score-card"><div class="k">라운드 점수</div><div class="v" id="roundScore">0</div></div>
+        <div class="score-card"><div class="k">골드 환산</div><div class="v" id="goldScore">0</div></div>
+        <div class="score-card"><div class="k">최종 점수</div><div class="v" id="totalScore">0</div></div>
+      </div>
+    </div>
+    <div class="actions" style="grid-template-columns:1fr;margin-top:14px">
+      <button class="btn primary" id="retryBtn" style="width:100%">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'zodiac_ascension_clean_v3';
+const RESULT_HISTORY_KEY = 'zodiac_ascension_result_history_v2';
+
+const stages = [
+  {id:'rat', baseName:'쥐', emoji:'🐭', element:'수(水)', success:85, stay:5, fail:10, holdCost:8, rerollCost:14, investBase:120},
+  {id:'ox', baseName:'소', emoji:'🐮', element:'토(土)', success:76, stay:10, fail:14, holdCost:15, rerollCost:26, investBase:260},
+  {id:'tiger', baseName:'호랑이', emoji:'🐯', element:'목(木)', success:67, stay:15, fail:18, holdCost:28, rerollCost:46, investBase:600},
+  {id:'rabbit', baseName:'토끼', emoji:'🐰', element:'목(木)', success:58, stay:22, fail:20, holdCost:48, rerollCost:78, investBase:1300},
+  {id:'dragon', baseName:'용', emoji:'🐉', element:'토(土)', success:48, stay:30, fail:22, holdCost:90, rerollCost:145, investBase:3200},
+  {id:'snake', baseName:'뱀', emoji:'🐍', element:'화(火)', success:39, stay:38, fail:23, holdCost:170, rerollCost:280, investBase:8000},
+  {id:'horse', baseName:'말', emoji:'🐴', element:'화(火)', success:31, stay:46, fail:23, holdCost:320, rerollCost:520, investBase:20000},
+  {id:'goat', baseName:'양', emoji:'🐐', element:'토(土)', success:24, stay:54, fail:22, holdCost:620, rerollCost:980, investBase:55000},
+  {id:'monkey', baseName:'원숭이', emoji:'🐵', element:'금(金)', success:18, stay:61, fail:21, holdCost:1300, rerollCost:2100, investBase:180000},
+  {id:'rooster', baseName:'닭', emoji:'🐔', element:'금(金)', success:13, stay:68, fail:19, holdCost:5200, rerollCost:8400, investBase:1800000},
+  {id:'dog', baseName:'개', emoji:'🐶', element:'토(土)', success:9, stay:75, fail:16, holdCost:42000, rerollCost:70000, investBase:20000000},
+  {id:'pig', baseName:'돼지', emoji:'🐷', element:'수(水)', success:5, stay:80, fail:15, holdCost:360000, rerollCost:600000, investBase:180000000},
+];
+
+const rarityWeights = [
+  {key:'low', weight:46},
+  {key:'normal', weight:28},
+  {key:'good', weight:16},
+  {key:'rare', weight:8},
+  {key:'legend', weight:2},
+];
+
+const variants = {
+  rat:[
+    {tier:'low', name:'하급 쥐', rarity:'common', success:70, stay:12, fail:18, cash:0.7, tags:['안좋은개체']},
+    {tier:'normal', name:'들쥐', rarity:'common', success:85, stay:5, fail:10, cash:1.0, tags:['기본형']},
+    {tier:'good', name:'우수 쥐', rarity:'rare', success:89, stay:3, fail:8, cash:1.6, tags:['상승형']},
+    {tier:'rare', name:'예언자 쥐', rarity:'epic', success:92, stay:2, fail:6, cash:2.6, tags:['초반대박']},
+    {tier:'legend', name:'황금 쥐', rarity:'legend', success:94, stay:1, fail:5, cash:5.2, tags:['최고가치']}
+  ],
+  ox:[
+    {tier:'low', name:'하급 소', rarity:'common', success:61, stay:17, fail:22, cash:0.7, tags:['무딘개체']},
+    {tier:'normal', name:'짐소', rarity:'common', success:76, stay:10, fail:14, cash:1.0, tags:['안정형']},
+    {tier:'good', name:'우수 소', rarity:'rare', success:84, stay:6, fail:10, cash:1.6, tags:['좋은개체']},
+    {tier:'rare', name:'철갑 소', rarity:'epic', success:89, stay:4, fail:7, cash:2.6, tags:['유지강함']},
+    {tier:'legend', name:'현무소', rarity:'legend', success:92, stay:3, fail:5, cash:5.2, tags:['최상급']}
+  ],
+  tiger:[
+    {tier:'low', name:'하급 호랑이', rarity:'common', success:52, stay:22, fail:26, cash:0.7, tags:['거친개체']},
+    {tier:'normal', name:'산호랑', rarity:'common', success:67, stay:15, fail:18, cash:1.0, tags:['공격형']},
+    {tier:'good', name:'우수 호랑이', rarity:'rare', success:75, stay:11, fail:14, cash:1.6, tags:['정예형']},
+    {tier:'rare', name:'백호', rarity:'epic', success:81, stay:8, fail:11, cash:2.6, tags:['승급특화']},
+    {tier:'legend', name:'왕호', rarity:'legend', success:85, stay:6, fail:9, cash:5.2, tags:['전설개체']}
+  ],
+  rabbit:[
+    {tier:'low', name:'하급 토끼', rarity:'common', success:43, stay:29, fail:28, cash:0.7, tags:['불안정']},
+    {tier:'normal', name:'들토끼', rarity:'common', success:58, stay:22, fail:20, cash:1.0, tags:['기동형']},
+    {tier:'good', name:'우수 토끼', rarity:'rare', success:66, stay:18, fail:16, cash:1.6, tags:['우수형']},
+    {tier:'rare', name:'달토끼', rarity:'epic', success:72, stay:15, fail:13, cash:2.6, tags:['도약형']},
+    {tier:'legend', name:'천궁토끼', rarity:'legend', success:76, stay:12, fail:12, cash:5.2, tags:['대박토끼']}
+  ],
+  dragon:[
+    {tier:'low', name:'하급 용', rarity:'common', success:33, stay:37, fail:30, cash:0.7, tags:['불안정']},
+    {tier:'normal', name:'풍용', rarity:'common', success:48, stay:30, fail:22, cash:1.0, tags:['환경형']},
+    {tier:'good', name:'우수 용', rarity:'rare', success:56, stay:26, fail:18, cash:1.6, tags:['좋은용']},
+    {tier:'rare', name:'뇌룡', rarity:'epic', success:62, stay:23, fail:15, cash:2.6, tags:['마의구간']},
+    {tier:'legend', name:'천제룡', rarity:'legend', success:66, stay:20, fail:14, cash:5.2, tags:['대박용']}
+  ],
+  snake:[
+    {tier:'low', name:'하급 뱀', rarity:'common', success:24, stay:45, fail:31, cash:0.7, tags:['느린개체']},
+    {tier:'normal', name:'검뱀', rarity:'common', success:39, stay:38, fail:23, cash:1.0, tags:['추입형']},
+    {tier:'good', name:'우수 뱀', rarity:'rare', success:47, stay:34, fail:19, cash:1.6, tags:['좋은추입']},
+    {tier:'rare', name:'허물뱀', rarity:'epic', success:53, stay:31, fail:16, cash:2.6, tags:['복구형']},
+    {tier:'legend', name:'황천뱀', rarity:'legend', success:57, stay:28, fail:15, cash:5.2, tags:['심연형']}
+  ],
+  horse:[
+    {tier:'low', name:'하급 말', rarity:'common', success:16, stay:53, fail:31, cash:0.7, tags:['둔한말']},
+    {tier:'normal', name:'질풍마', rarity:'common', success:31, stay:46, fail:23, cash:1.0, tags:['정석형']},
+    {tier:'good', name:'우수 말', rarity:'rare', success:39, stay:42, fail:19, cash:1.6, tags:['고속형']},
+    {tier:'rare', name:'천마', rarity:'epic', success:45, stay:39, fail:16, cash:2.6, tags:['승급말']},
+    {tier:'legend', name:'적토마', rarity:'legend', success:49, stay:36, fail:15, cash:5.2, tags:['전설말']}
+  ],
+  goat:[
+    {tier:'low', name:'하급 양', rarity:'common', success:9, stay:61, fail:30, cash:0.7, tags:['느린양']},
+    {tier:'normal', name:'산양', rarity:'common', success:24, stay:54, fail:22, cash:1.0, tags:['완만형']},
+    {tier:'good', name:'우수 양', rarity:'rare', success:32, stay:50, fail:18, cash:1.6, tags:['안정형']},
+    {tier:'rare', name:'백양', rarity:'epic', success:38, stay:47, fail:15, cash:2.6, tags:['축복형']},
+    {tier:'legend', name:'태고양', rarity:'legend', success:42, stay:44, fail:14, cash:5.2, tags:['대수익양']}
+  ],
+  monkey:[
+    {tier:'low', name:'하급 원숭이', rarity:'common', success:3, stay:68, fail:29, cash:0.7, tags:['변동실패']},
+    {tier:'normal', name:'잔꾀 원숭이', rarity:'common', success:18, stay:61, fail:21, cash:1.0, tags:['변동형']},
+    {tier:'good', name:'우수 원숭이', rarity:'rare', success:26, stay:57, fail:17, cash:1.6, tags:['고변동']},
+    {tier:'rare', name:'현혹 원숭이', rarity:'epic', success:32, stay:54, fail:14, cash:2.6, tags:['도박형']},
+    {tier:'legend', name:'천손원숭', rarity:'legend', success:36, stay:51, fail:13, cash:5.2, tags:['고가치']}
+  ],
+  rooster:[
+    {tier:'low', name:'하급 닭', rarity:'common', success:1, stay:75, fail:24, cash:0.7, tags:['불리한개체']},
+    {tier:'normal', name:'새벽닭', rarity:'common', success:13, stay:68, fail:19, cash:1.0, tags:['리듬형']},
+    {tier:'good', name:'우수 닭', rarity:'rare', success:21, stay:64, fail:15, cash:1.6, tags:['좋은닭']},
+    {tier:'rare', name:'봉관닭', rarity:'epic', success:27, stay:61, fail:12, cash:2.6, tags:['상위개체']},
+    {tier:'legend', name:'주작닭', rarity:'legend', success:31, stay:58, fail:11, cash:5.2, tags:['대박닭']}
+  ],
+  dog:[
+    {tier:'low', name:'하급 개', rarity:'common', success:1, stay:81, fail:18, cash:0.7, tags:['후반약']},
+    {tier:'normal', name:'들개', rarity:'common', success:9, stay:75, fail:16, cash:1.0, tags:['버티기']},
+    {tier:'good', name:'우수 개', rarity:'rare', success:17, stay:71, fail:12, cash:1.6, tags:['우수후반']},
+    {tier:'rare', name:'흑견', rarity:'epic', success:23, stay:68, fail:9, cash:2.6, tags:['좋은후반']},
+    {tier:'legend', name:'천견', rarity:'legend', success:27, stay:65, fail:8, cash:5.2, tags:['억대각']}
+  ],
+  pig:[
+    {tier:'low', name:'하급 돼지', rarity:'common', success:1, stay:85, fail:14, cash:0.7, tags:['최종약체']},
+    {tier:'normal', name:'늪돼지', rarity:'common', success:5, stay:80, fail:15, cash:1.0, tags:['최종형']},
+    {tier:'good', name:'우수 돼지', rarity:'rare', success:11, stay:75, fail:14, cash:1.6, tags:['좋은최종']},
+    {tier:'rare', name:'철갑돼지', rarity:'epic', success:17, stay:70, fail:13, cash:2.6, tags:['끝버티기']},
+    {tier:'legend', name:'신수돼지', rarity:'legend', success:23, stay:65, fail:12, cash:5.2, tags:['억대대박']}
+  ]
+};
+
+const state = {
+  round:1, stage:1, hp:300, gold:300, combo:0, bestCashout:0, currentCard:null, dead:false, logs:[], investedThisCard:false
+};
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    state.bestCashout = d.bestCashout || 0;
+  }catch(e){}
+}
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({bestCashout:state.bestCashout})); }
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function weightedTier(){
+  const n = Math.random()*100;
+  let acc = 0;
+  for(const x of rarityWeights){ acc += x.weight; if(n < acc) return x.key; }
+  return 'normal';
+}
+function stageDef(){ return stages[state.stage-1]; }
+function rarityLabel(r){ return {common:'일반', rare:'희귀', epic:'영웅', legend:'전설'}[r]; }
+function log(text){ state.logs.unshift(text); state.logs = state.logs.slice(0,18); }
+function spawnCard(){
+  const base = stageDef();
+  const tier = weightedTier();
+  const pool = variants[base.id].filter(v=>v.tier === tier);
+  return {...base, ...rand(pool)};
+}
+function rerollCost(){ return stageDef().rerollCost; }
+function holdCost(){ return stageDef().holdCost; }
+function investmentValue(){
+  const c = state.currentCard;
+  return Math.round(c.investBase * c.cash);
+}
+function calcRates(){
+  const c = state.currentCard;
+  return {success:c.success, stay:c.stay, fail:c.fail};
+}
+function recommendation(){
+  const r = calcRates();
+  if(state.stage === 12) return ['마지막 단계입니다', '이제 더 승급하는 것이 아니라 여기 도달한 순간 게임 성공입니다.'];
+  if(r.success >= 80) return ['지금 승급 강추천', '확률이 매우 높습니다. 바로 다음 동물로 올라갈 기회입니다.'];
+  if(r.success >= 45) return ['승급 도전 가능', '괜찮은 카드입니다. 다음 동물을 노릴 만합니다.'];
+  return ['리롤 또는 투자 추천', '확률이 낮습니다. 더 좋은 개체를 찾거나 투자로 버틸 자금을 확보하는 편이 낫습니다.'];
+}
+
+function formatMoney(v){
+  if(v >= 100000000) return (v/100000000).toFixed(v>=1000000000?0:1)+'억';
+  if(v >= 10000) return (v/10000).toFixed(v>=100000?0:1)+'만';
+  return v.toLocaleString();
+}
+function stageScoreValue(stage){
+  const map = [0,100,220,380,600,900,1300,1800,2400,3200,4200,5500,7000];
+  return map[Math.max(1, Math.min(12, stage))];
+}
+function goldToScore(gold){
+  return Math.floor(Math.sqrt(Math.max(0, gold)) * 12);
+}
+function computeFinalScore(stage, round, gold, cleared=false){
+  const animalScore = stageScoreValue(stage);
+  const roundScore = round * 35;
+  const goldScore = goldToScore(gold);
+  const clearBonus = cleared ? 3000 : 0;
+  return {
+    animalScore,
+    roundScore,
+    goldScore,
+    clearBonus,
+    total: animalScore + roundScore + goldScore + clearBonus
+  };
+}
+let toastTimer = null;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  clearTimeout(toastTimer);
+  el.classList.remove('show');
+  el.textContent = msg;
+  void el.offsetWidth;
+  el.classList.add('show');
+  toastTimer = setTimeout(()=> el.classList.remove('show'), 1800);
+}
+function showEventModal(kind, title, desc, lines=[]){
+  const overlay = document.getElementById('eventOverlay');
+  const hero = document.getElementById('eventHero');
+  const emoji = document.getElementById('eventEmoji');
+  const titleEl = document.getElementById('eventTitle');
+  const descEl = document.getElementById('eventDesc');
+  const kv = document.getElementById('eventKv');
+  if(!overlay || !hero || !emoji || !titleEl || !descEl || !kv) return;
+  hero.className = `event-hero ${kind}`;
+  emoji.textContent = ({success:'✅', stay:'⏸️', fail:'💥', reroll:'🎲', invest:'💰'})[kind] || '✨';
+  titleEl.textContent = title;
+  descEl.innerHTML = desc;
+  kv.innerHTML = lines.map(x=>`<div class="result-line">${x}</div>`).join('');
+  overlay.classList.add('show');
+}
+function closeEventModal(){
+  const overlay = document.getElementById('eventOverlay');
+  if(!overlay) return;
+  overlay.classList.remove('show');
+}
+
+
+function loadResultHistory(){
+  try{
+    const raw = localStorage.getItem(RESULT_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    return [];
+  }
+}
+function saveResultHistory(){
+  try{
+    localStorage.setItem(RESULT_HISTORY_KEY, JSON.stringify(state.resultHistory || []));
+  }catch(e){}
+}
+function estimateSurviveTurnsByGold(gold, stageIndex){
+  const s = stages[Math.max(0, Math.min(stages.length - 1, stageIndex - 1))];
+  const avgCost = Math.max(1, Math.floor((s.rerollCost + s.holdCost) / 2));
+  return Math.max(0, Math.floor((gold || 0) / avgCost));
+}
+function pushPendingResultToHistory(){
+  if(!state.pendingResult || state.resultRecorded) return;
+  state.resultRecorded = true;
+  state.resultHistory = [state.pendingResult, ...(state.resultHistory || [])].slice(0, 8);
+  state.pendingResult = null;
+  saveResultHistory();
+  renderRecentHistory();
+}
+function makePendingResult(type, reasonText=''){
+  const entry = {
+    type,
+    stage: state.stage,
+    round: state.round,
+    gold: state.gold,
+    combo: state.combo,
+    turns: estimateSurviveTurnsByGold(state.gold, state.stage),
+    animal: state.currentCard ? state.currentCard.name : stageDef().baseName,
+    reason: reasonText || (type === 'win' ? '돼지 단계까지 도달하여 생존했습니다.' : '운영자금 소진'),
+    at: Date.now()
+  };
+  state.pendingResult = entry;
+  state.resultRecorded = false;
+}
+function renderRecentHistory(){
+  const root = document.getElementById('recentHistoryList');
+  if(!root) return;
+  const list = state.resultHistory || [];
+  if(!list.length){
+    root.innerHTML = '<div class="item"><div class="sub">아직 종료된 판이 없습니다. 죽었습니다 / 생존하였습니다 결과창을 닫으면 여기에 최근 기록이 남습니다.</div></div>';
+    return;
+  }
+  root.innerHTML = list.map((x, idx)=>{
+    const isWin = x.type === 'win';
+    const title = isWin ? '생존하였습니다' : '죽었습니다';
+    const animalLabel = x.animal || '-';
+    return `
+      <div class="history-card ${isWin ? 'win' : 'lose'}">
+        <div class="history-head">
+          <div class="history-badge ${isWin ? 'win' : 'lose'}">${isWin ? '🏆' : '💀'} ${title}</div>
+          <div class="history-step">${idx + 1}번째 최근 기록</div>
+        </div>
+        <div class="history-reason">${x.reason || ''}</div>
+        <div class="history-meta">
+          <div class="history-mini"><div class="k">도달 단계</div><div class="v">${x.stage}단계</div></div>
+          <div class="history-mini"><div class="k">마지막 동물</div><div class="v">${animalLabel}</div></div>
+          <div class="history-mini"><div class="k">라운드</div><div class="v">${x.round}턴</div></div>
+          <div class="history-mini"><div class="k">잔여 골드</div><div class="v">${formatMoney(x.gold)}G</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+
+function renderTop(){
+  document.getElementById('roundValue').textContent = state.round;
+  document.getElementById('stageValue').textContent = state.stage;
+  document.getElementById('goldValue').textContent = formatMoney(state.gold);
+  document.getElementById('comboValue').textContent = state.combo;
+
+  const rerollC = rerollCost();
+  const holdC = holdCost();
+  const avgCost = Math.max(1, Math.floor((rerollC + holdC) / 2));
+  const left = Math.floor(state.gold / Math.max(1, rerollC));
+  const surviveTurns = Math.floor(state.gold / avgCost);
+  const gaugeCap = 30;
+  const gaugePercent = Math.max(0, Math.min(100, (surviveTurns / gaugeCap) * 100));
+
+  let statusText = '위험';
+  let statusClass = 'danger';
+  let gaugeGradient = 'linear-gradient(90deg,#fb7185,#ef4444)';
+
+  if(surviveTurns > 20){
+    statusText = '안정';
+    statusClass = 'safe';
+    gaugeGradient = 'linear-gradient(90deg,#4ade80,#22c55e)';
+  }else if(surviveTurns > 10){
+    statusText = '경고';
+    statusClass = 'warn';
+    gaugeGradient = 'linear-gradient(90deg,#fbbf24,#f59e0b)';
+  }
+
+  state.hp = Math.max(0, surviveTurns);
+
+  const bestBox = document.querySelector('.bestbox');
+  if(bestBox) bestBox.className = `bestbox ${statusClass}`;
+  const bestLabel = document.getElementById('bestLabel');
+  if(bestLabel) bestLabel.textContent = '생존 상태';
+  document.getElementById('bestValue').textContent = statusText;
+  document.getElementById('hpText').textContent = `${surviveTurns}턴 생존 가능`;
+  document.getElementById('hpFill').style.width = `${gaugePercent}%`;
+  document.getElementById('hpFill').style.background = gaugeGradient;
+  document.getElementById('rerollLeftValue').textContent = `${left}회`;
+  const surviveTurnEl = document.getElementById('surviveTurnValue');
+  if(surviveTurnEl) surviveTurnEl.textContent = `${surviveTurns}턴`;
+}
+function renderCard(){
+  const c = state.currentCard;
+  const rates = calcRates();
+  const rarity = document.getElementById('rarityPill');
+  rarity.className = `rarity-pill ${c.rarity}`;
+  rarity.textContent = rarityLabel(c.rarity);
+
+  document.getElementById('stagePill').textContent = `${state.stage}단계`;
+  document.getElementById('cashoutValue').textContent = `투자 보상 ${formatMoney(investmentValue())}G`;
+  document.getElementById('animalEmoji').textContent = c.emoji;
+  document.getElementById('animalName').textContent = c.name;
+  document.getElementById('animalDesc').textContent = `${c.baseName} 계열 · ${c.tags.join(' · ')} · 유지비 ${formatMoney(holdCost())}G · 리롤비 ${formatMoney(rerollCost())}G`;
+  document.getElementById('successRate').textContent = `${rates.success}%`;
+  document.getElementById('stayRate').textContent = `${rates.stay}%`;
+  document.getElementById('failRate').textContent = `${rates.fail}%`;
+  const investBtn = document.getElementById('investBtn');
+  const cannotInvestAtStageOne = state.stage === 1;
+  investBtn.disabled = state.investedThisCard || cannotInvestAtStageOne;
+  if(cannotInvestAtStageOne){
+    investBtn.textContent = '투자불가';
+  }else{
+    investBtn.textContent = state.investedThisCard ? '투자완료' : '투자';
+  }
+
+  const tags = [];
+  if(c.tier === 'legend') tags.push(['전설 대박개체','warn']);
+  if(c.tier === 'rare') tags.push(['희귀 개체','good']);
+  if(state.stage === 1) tags.push(['쥐 단계는 투자 불가','bad']);
+  if(state.stage >= 10) tags.push(['후반 유지·리롤비 급등','warn']);
+  const [plan] = recommendation();
+  tags.push([plan, rates.success >= 60 ? 'good' : rates.success >= 35 ? 'warn' : 'bad']);
+  document.getElementById('cardTags').innerHTML = tags.map(([t,cls])=>`<span class="tag ${cls}">${t}</span>`).join('');
+}
+function renderRules(){
+  document.getElementById('costTitle').textContent = `유지비 / 리롤비 / 기본 투자금`;
+  document.getElementById('costDesc').textContent = `유지비 ${formatMoney(holdCost())}G · 리롤비 ${formatMoney(rerollCost())}G · 기본 투자금 ${formatMoney(stageDef().investBase)}G`;
+  const [title, sub] = recommendation();
+  document.getElementById('footerTitle').textContent = title;
+  document.getElementById('footerPill').textContent = `${state.stage}단계`;
+  document.getElementById('footerDesc').textContent = sub;
+}
+function renderLogs(){
+  const root = document.getElementById('logList');
+  if(!root) return;
+  if(!state.logs.length){
+    root.innerHTML = '<div class="item"><div class="sub">환경과 상점은 제거했습니다. 이제 리롤 개체 확률만 보고 승급할지, 투자할지 판단하세요. 돼지 전설 개체 최대 성공은 23%까지만 나옵니다.</div></div>';
+    return;
+  }
+  root.innerHTML = state.logs.map(x=>`<div class="item"><div class="sub">${x}</div></div>`).join('');
+}
+function renderAll(){
+  renderTop();
+  renderCard();
+  renderRules();
+  renderRecentHistory();
+  renderLogs();
+}
+function nextCard(){
+  state.currentCard = spawnCard();
+  state.investedThisCard = false;
+  renderAll();
+}
+
+function rerollAction(){
+  if(state.dead) return;
+  const cost = rerollCost();
+  if(state.gold < cost){
+    setFooter('리롤 실패', '골드 부족', '현재 단계의 리롤 비용이 너무 높습니다. 투자로 현금화하거나 승급을 노리세요.');
+    return;
+  }
+  state.gold -= cost;
+  state.round += 1;
+  state.combo = 0;
+  log(`<b>리롤</b> · -${formatMoney(cost)}G · 다른 ${stageDef().baseName} 개체 탐색`);
+  const leftAfter = Math.floor(state.gold / Math.max(1, rerollCost()));
+  showToast(`리롤했습니다. -${formatMoney(cost)}G · 남은 리롤 횟수 ${leftAfter}회`);
+  showEventModal('reroll','리롤했습니다',`다른 ${stageDef().baseName} 개체를 찾았습니다.`,[`차감 골드: ${formatMoney(cost)}G`,`남은 리롤 횟수: ${leftAfter}회`,`현재 골드: ${formatMoney(state.gold)}G`]);
+  if(state.gold <= 0){ state.gold = 0; die('리롤 비용으로 운영자금이 모두 소진되었습니다.'); return; }
+  nextCard();
+}
+function upgradeAction(){
+  if(state.dead) return;
+  const rates = calcRates();
+  const roll = Math.random()*100;
+
+  if(roll < rates.success){
+    const prevName = state.currentCard ? state.currentCard.name : stageDef().baseName;
+    state.combo += 1;
+    state.round += 1;
+
+    if(state.stage >= 12){
+      winGame();
+      return;
+    }
+
+    state.stage = Math.min(12, state.stage + 1);
+
+    if(state.stage === 12){
+      winGame();
+      return;
+    }
+
+    state.currentCard = spawnCard();
+    state.investedThisCard = false;
+    renderAll();
+
+    const nextName = state.currentCard ? state.currentCard.name : stageDef().baseName;
+    log(`<b>${prevName}</b> 승급 성공 · <b>${nextName}</b> 단계로 진입`);
+    showToast('승급에 성공했습니다. 다음 동물로 변합니다.');
+    showEventModal('success','승급에 성공했습니다',`<b>${prevName}</b> → <b>${nextName}</b>`,[`성공 확률: ${rates.success}%`,`현재 라운드: ${state.round}`]);
+    setFooter('승급 성공', `${rates.success}%`, '성공했습니다. 다음 동물로 올라갑니다.');
+    return;
+  }
+
+  if(roll < rates.success + rates.stay){
+    const cost = holdCost();
+    state.gold = Math.max(0, state.gold - cost);
+    state.combo = 0;
+    state.round += 1;
+    log(`<b>${state.currentCard.name}</b> 유지 · -${formatMoney(cost)}G · 같은 단계 재도전`);
+    showToast(`유지되었습니다. -${formatMoney(cost)}G · 같은 단계의 새 개체가 등장합니다.`);
+    showEventModal('stay','유지되었습니다',`같은 단계에서 다시 기회를 얻었습니다.`,[`유지 확률: ${rates.stay}%`,`차감 골드: ${formatMoney(cost)}G`,`현재 골드: ${formatMoney(state.gold)}G`]);
+    setFooter('유지', `${rates.stay}%`, '같은 단계에 머무르며 새 개체로 다시 판단합니다.');
+    if(state.gold <= 0){
+      die('유지 비용으로 운영자금이 모두 소진되었습니다.');
+      return;
+    }
+    nextCard();
+    return;
+  }
+
+  state.gold = Math.floor(state.gold * 0.2);
+  state.combo = 0;
+  state.round += 1;
+  log(`<b>${state.currentCard.name}</b> 승급 실패 · 즉시 탈락 · 보유 골드 80% 손실`);
+  showToast('승급에 실패했습니다. 즉시 탈락합니다.');
+  die('승급에 실패하여 즉시 탈락했습니다.');
+}
+function investAction(){
+  if(state.dead) return;
+  if(state.stage === 1){
+    showToast('쥐 단계에서는 투자할 수 없습니다. 먼저 승급에 성공해야 합니다.');
+    return;
+  }
+  if(state.investedThisCard){
+    showToast('이 카드에는 이미 투자했습니다. 다음 카드에서 다시 가능합니다.');
+    return;
+  }
+  const value = investmentValue();
+  const prevStage = state.stage;
+  state.gold += value;
+  state.bestCashout = Math.max(state.bestCashout, value);
+  state.investedThisCard = true;
+  save();
+  state.stage = Math.max(1, state.stage - 1);
+  state.combo = 0;
+  state.round += 1;
+  log(`<b>${state.currentCard.name}</b> 투자 완료 · +${formatMoney(value)}G · ${prevStage}→${state.stage}단계`);
+  const ratio = Math.max(1, Math.round((value / Math.max(1, stageDef().investBase)) * 100));
+  showToast(`투자 성공. ${formatMoney(value)}G를 벌었습니다. 수익률 ${ratio}%`);
+  setFooter('투자 완료', `+${formatMoney(value)}G`, '한 단계 내려가지만 운영자금을 크게 확보했습니다.');
+  nextCard();
+}
+function setFooter(title, pill, desc){
+  document.getElementById('footerTitle').textContent = title;
+  document.getElementById('footerPill').textContent = pill;
+  document.getElementById('footerDesc').textContent = desc;
+}
+function winGame(){
+  state.dead = true;
+  makePendingResult('win', '돼지 단계까지 도달하여 생존했습니다.');
+  const score = computeFinalScore(12, state.round, state.gold, true);
+  document.getElementById('successMessage').innerHTML = `
+    당신은 생존하셨습니다.<br><br>
+    총 ${state.round}라운드 동안<br>
+    리롤의 유혹을 이겨내고,<br>
+    투자의 타이밍을 읽고,<br>
+    승급의 순간을 선택한 결과입니다.<br><br>
+    이 게임은 확률이 아니라<br>
+    선택의 게임이었습니다.
+  `;
+  document.getElementById('successRound').textContent = `총 ${state.round}라운드`;
+  document.getElementById('successGold').textContent = `잔여 골드 ${formatMoney(state.gold)}`;
+  document.getElementById('successCombo').textContent = `연승 ${state.combo}`;
+  document.getElementById('successAnimalScore').textContent = score.animalScore.toLocaleString();
+  document.getElementById('successRoundScore').textContent = score.roundScore.toLocaleString();
+  document.getElementById('successGoldScore').textContent = score.goldScore.toLocaleString();
+  document.getElementById('successTotalScore').textContent = score.total.toLocaleString() + ' (+클리어 보너스)';
+  document.getElementById('successOverlay').classList.add('show');
+}
+function die(reason){
+  state.dead = true;
+  makePendingResult('lose', reason);
+  const score = computeFinalScore(state.stage, state.round, state.gold, false);
+  document.getElementById('deathRound').textContent = `라운드 ${state.round}`;
+  document.getElementById('deathStage').textContent = `도달 단계 ${state.stage} / 12`;
+  document.getElementById('deathGold').textContent = `잔여 골드 ${formatMoney(state.gold)}`;
+  document.getElementById('deathCombo').textContent = `연승 ${state.combo}`;
+  document.getElementById('deathReason').textContent = reason;
+  document.getElementById('animalScore').textContent = score.animalScore.toLocaleString();
+  document.getElementById('roundScore').textContent = score.roundScore.toLocaleString();
+  document.getElementById('goldScore').textContent = score.goldScore.toLocaleString();
+  document.getElementById('totalScore').textContent = score.total.toLocaleString();
+  document.getElementById('deathOverlay').classList.add('show');
+}
+
+function closeResultAndRestart(){
+  pushPendingResultToHistory();
+  resetGame();
+}
+
+function resetGame(){
+  state.resultRecorded = false;
+  state.pendingResult = null;
+  state.round = 1;
+  state.stage = 1;
+  state.hp = 300;
+  state.gold = 300;
+  state.combo = 0;
+  state.dead = false;
+  state.logs = [];
+  state.investedThisCard = false;
+  document.getElementById('deathOverlay').classList.remove('show');
+  document.getElementById('successOverlay').classList.remove('show');
+  closeEventModal();
+renderRecentHistory();
+  nextCard();
+  setFooter('초반은 승급이 잘 뜨지만', '1단계', '쥐에서 시작해 돼지에 도달하면 성공입니다. 승급은 성공·유지·실패가 있으며, 유지와 리롤 비용은 크게 올라가므로 투자를 잘해야 버틸 수 있습니다.');
+}
+
+document.getElementById('rerollBtn').addEventListener('click', rerollAction);
+document.getElementById('upgradeBtn').addEventListener('click', upgradeAction);
+document.getElementById('investBtn').addEventListener('click', investAction);
+document.getElementById('retryBtn').addEventListener('click', closeResultAndRestart);
+document.getElementById('successRetryBtn').addEventListener('click', closeResultAndRestart);
+document.getElementById('eventCloseBtn').addEventListener('click', closeEventModal);
+
+state.resultHistory = loadResultHistory();
+renderRecentHistory();
+load();
+closeEventModal();
+nextCard();
+setFooter('초반은 승급이 잘 뜨지만', '1단계', '쥐에서 시작해 돼지에 도달하면 성공입니다. 철갑돼지 최대 17%, 신수돼지 최대 23%입니다.');
+</script>
+</body>
+</html>
