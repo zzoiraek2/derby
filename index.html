@@ -147,7 +147,7 @@ body{display:flex;justify-content:center;align-items:center}
     <div class="header-top">
       <div>
         <div class="title">십이지신 승급 도전</div>
-        <div class="subtitle">쥐부터 시작해 마지막 돼지까지 도달하면 성공입니다. 성공하면 다음 동물로 승급하고, 유지는 같은 동물에 머물되 등급이 한 단계 하락하며, 실패하면 다시 쥐부터 시작합니다. 쥐와 돼지 구간은 유지가 없고, 높은 등급일수록 승급 확률이 더 낮습니다.</div>
+        <div class="subtitle">쥐부터 시작해 마지막 돼지까지 도달하면 성공입니다. 성공하면 다음 동물로 승급하고, 유지가 나오면 이전 동물로 한 단계 하락합니다. 실패하면 다시 쥐부터 시작하지만, 3콤보 이상을 달성한 상태라면 1회 부활권이 생성되어 실패한 동물에서 한 번 다시 도전할 수 있습니다.</div>
       </div>
       <div class="bestbox">
         <div class="k">최고 도달</div>
@@ -164,7 +164,8 @@ body{display:flex;justify-content:center;align-items:center}
         <div class="stat"><div class="k">현재 단계</div><div class="v" id="stageValue">1</div></div>
         <div class="stat"><div class="k">현재 동물</div><div class="v" id="currentAnimalMini">쥐</div></div>
         <div class="stat"><div class="k">연속 성공</div><div class="v" id="comboValue">0</div></div>
-        <div class="stat span2"><div class="k">누적 실패</div><div class="v" id="failCountValue">0</div></div>
+        <div class="stat"><div class="k">누적 실패</div><div class="v" id="failCountValue">0</div></div>
+        <div class="stat"><div class="k">부활권</div><div class="v" id="reviveValue">없음</div></div>
         <div class="stat span2"><div class="k">목표</div><div class="v">돼지 달성</div></div>
       </div>
     </div>
@@ -214,11 +215,15 @@ body{display:flex;justify-content:center;align-items:center}
       <div class="section-title">등급별 확률 규칙</div>
       <div class="item">
         <div class="name">승급 규칙</div>
-        <div class="sub">성공 시 다음 동물로 승급합니다. 유지 시 같은 동물에 머물며 등급이 한 단계 하락하고, 실패 시 즉시 쥐로 초기화됩니다. 쥐와 개→돼지 구간은 유지가 없습니다.</div>
+        <div class="sub">성공 시 다음 동물로 승급합니다. 유지 시 이전 동물로 한 단계 하락합니다. 실패 시 즉시 쥐로 초기화되지만, 3콤보 이상으로 획득한 부활권이 있으면 실패한 동물 상태에서 1회 부활합니다.</div>
       </div>
       <div class="item">
         <div class="name">등급 출현 확률</div>
         <div class="sub mono">일반 58% · 희귀 25% · 영웅 12% · 전설 5%</div>
+      </div>
+      <div class="item">
+        <div class="name">부활권 규칙</div>
+        <div class="sub">연속 성공 3콤보 이상 달성 시 이번 도전 동안 사용할 수 있는 부활권 1개가 생성됩니다. 부활권 보유 중 실패하면 즉시 소모되며, 방금 실패했던 동물과 등급 상태로 되살아납니다.</div>
       </div>
       <div class="item">
         <div class="name">등급별 성공 · 유지 · 실패 확률표</div>
@@ -232,7 +237,7 @@ body{display:flex;justify-content:center;align-items:center}
       <div class="footer-title" id="footerTitle">초반은 비교적 쉽지만</div>
       <div class="pill" id="footerPill">1단계</div>
     </div>
-    <div class="footer-desc" id="footerDesc">후반으로 갈수록 난도가 올라가며, 유지는 등급 하락 페널티가 적용됩니다. 마지막 개 → 돼지는 유지 없이 바로 성공 또는 실패입니다.</div>
+    <div class="footer-desc" id="footerDesc">후반으로 갈수록 난도가 올라가며, 유지는 이전 동물로 하락합니다. 3콤보 이상이면 부활권 1개가 생성되고, 마지막 개 → 돼지에도 유지 구간이 존재합니다.</div>
   </div>
 </div>
 
@@ -259,8 +264,8 @@ body{display:flex;justify-content:center;align-items:center}
 </div>
 
 <script>
-const STORAGE_KEY = 'zodiac_challenge_best_v2';
-const RESULT_HISTORY_KEY = 'zodiac_challenge_result_history_v2';
+const STORAGE_KEY = 'zodiac_challenge_best_v3';
+const RESULT_HISTORY_KEY = 'zodiac_challenge_result_history_v3';
 
 const STAGES = [
   {id:'rat', baseName:'쥐', emoji:'🐭', next:'소'},
@@ -287,55 +292,55 @@ const RARITY_META = {
 const RATE_TABLE = {
   common:[
     {success:100, stay:0, fail:0},
-    {success:78, stay:15, fail:7},
-    {success:68, stay:20, fail:12},
-    {success:58, stay:24, fail:18},
-    {success:50, stay:28, fail:22},
-    {success:42, stay:33, fail:25},
-    {success:35, stay:38, fail:27},
-    {success:28, stay:42, fail:30},
-    {success:21, stay:47, fail:32},
-    {success:15, stay:50, fail:35},
-    {success:4, stay:0, fail:96}
+    {success:80, stay:15, fail:5},
+    {success:70, stay:20, fail:10},
+    {success:62, stay:23, fail:15},
+    {success:55, stay:27, fail:18},
+    {success:48, stay:32, fail:20},
+    {success:42, stay:35, fail:23},
+    {success:35, stay:40, fail:25},
+    {success:28, stay:45, fail:27},
+    {success:20, stay:48, fail:32},
+    {success:6, stay:24, fail:70}
   ],
   rare:[
     {success:100, stay:0, fail:0},
-    {success:70, stay:18, fail:12},
-    {success:60, stay:23, fail:17},
-    {success:50, stay:27, fail:23},
-    {success:42, stay:31, fail:27},
-    {success:34, stay:36, fail:30},
-    {success:27, stay:40, fail:33},
-    {success:20, stay:44, fail:36},
+    {success:72, stay:18, fail:10},
+    {success:62, stay:22, fail:16},
+    {success:54, stay:26, fail:20},
+    {success:46, stay:30, fail:24},
+    {success:38, stay:34, fail:28},
+    {success:32, stay:38, fail:30},
+    {success:26, stay:42, fail:32},
+    {success:20, stay:45, fail:35},
     {success:14, stay:48, fail:38},
-    {success:10, stay:50, fail:40},
-    {success:2, stay:0, fail:98}
+    {success:4, stay:26, fail:70}
   ],
   epic:[
     {success:100, stay:0, fail:0},
-    {success:62, stay:20, fail:18},
-    {success:52, stay:24, fail:24},
-    {success:42, stay:29, fail:29},
-    {success:34, stay:33, fail:33},
-    {success:26, stay:37, fail:37},
-    {success:20, stay:40, fail:40},
-    {success:14, stay:44, fail:42},
-    {success:10, stay:46, fail:44},
-    {success:6, stay:48, fail:46},
-    {success:1, stay:0, fail:99}
+    {success:65, stay:20, fail:15},
+    {success:55, stay:25, fail:20},
+    {success:45, stay:30, fail:25},
+    {success:38, stay:33, fail:29},
+    {success:30, stay:36, fail:34},
+    {success:24, stay:40, fail:36},
+    {success:18, stay:43, fail:39},
+    {success:12, stay:46, fail:42},
+    {success:8, stay:48, fail:44},
+    {success:2, stay:28, fail:70}
   ],
   legend:[
     {success:100, stay:0, fail:0},
-    {success:55, stay:20, fail:25},
-    {success:45, stay:24, fail:31},
-    {success:35, stay:28, fail:37},
-    {success:28, stay:31, fail:41},
-    {success:20, stay:35, fail:45},
-    {success:14, stay:39, fail:47},
-    {success:10, stay:42, fail:48},
-    {success:6, stay:45, fail:49},
-    {success:3, stay:47, fail:50},
-    {success:0.5, stay:0, fail:99.5}
+    {success:58, stay:22, fail:20},
+    {success:48, stay:26, fail:26},
+    {success:38, stay:30, fail:32},
+    {success:30, stay:33, fail:37},
+    {success:24, stay:36, fail:40},
+    {success:18, stay:40, fail:42},
+    {success:12, stay:43, fail:45},
+    {success:8, stay:46, fail:46},
+    {success:5, stay:48, fail:47},
+    {success:1, stay:29, fail:70}
   ]
 };
 
@@ -420,7 +425,10 @@ const state = {
   currentCard:null,
   resultHistory:[],
   pendingResult:null,
-  afterCloseAction:null
+  afterCloseAction:null,
+  reviveAvailable:false,
+  reviveGrantedRun:false,
+  reviveSnapshot:null
 };
 
 const RARITY_ORDER = ['common','rare','epic','legend'];
@@ -490,6 +498,7 @@ function renderTop(){
   document.getElementById('currentAnimalMini').textContent = stageDef().baseName;
   document.getElementById('comboValue').textContent = state.combo;
   document.getElementById('failCountValue').textContent = state.failCount;
+  document.getElementById('reviveValue').textContent = state.reviveAvailable ? '보유' : '없음';
   document.getElementById('bestValue').textContent = STAGES[state.bestStage - 1].baseName;
 }
 function renderCard(){
@@ -500,7 +509,7 @@ function renderCard(){
   rarity.textContent = rarityLabel(c.rarity);
   document.getElementById('animalEmoji').textContent = c.emoji;
   document.getElementById('animalName').textContent = c.name;
-  document.getElementById('animalDesc').textContent = `${c.baseName} 단계 · ${rarityLabel(c.rarity)} 등급입니다. 성공하면 ${c.next}로 이동하고, 유지가 나오면 같은 동물에 머물며 등급이 하락합니다. 실패하면 다시 쥐부터 시작합니다.`;
+  document.getElementById('animalDesc').textContent = `${c.baseName} 단계 · ${rarityLabel(c.rarity)} 등급입니다. 성공하면 ${c.next}로 이동하고, 유지가 나오면 이전 동물로 한 단계 하락합니다. 실패하면 다시 쥐부터 시작하지만, 부활권이 있으면 현재 동물 상태로 1회 부활합니다.`;
   document.getElementById('successRate').textContent = formatPercent(c.success);
   document.getElementById('stayRate').textContent = formatPercent(c.stay || 0);
   document.getElementById('failRate').textContent = formatPercent(c.fail);
@@ -515,7 +524,9 @@ function renderCard(){
   else if(c.success >= 40) tags.push(['도전 가능','warn']);
   else tags.push(['신중 구간','bad']);
 
-  if((c.stay || 0) > 0) tags.push([`유지 ${formatPercent(c.stay)} 시 등급 하락`,'warn']);
+  if((c.stay || 0) > 0) tags.push([`유지 ${formatPercent(c.stay)} 시 이전 동물 하락`,'warn']);
+  if(state.reviveAvailable) tags.push(['부활권 보유 중','good']);
+  else if(state.combo >= 2) tags.push(['다음 성공 시 부활권','warn']);
 
   if(state.stage >= 10) tags.push(['후반 극악 난도','warn']);
   if(state.stage === 11) tags.push([`${rarityLabel(c.rarity)} 개→돼지 ${formatPercent(c.success)}`,'bad']);
@@ -548,7 +559,7 @@ function buildProbabilityHtml(){
           <tbody>${rows}</tbody>
         </table>
       </div>
-      <div class="probability-note">${meta.label} 등급일수록 유지·실패 부담이 커지고, 개 → 돼지 구간은 유지 없이 최종 판정만 적용됩니다.</div>
+      <div class="probability-note">${meta.label} 등급일수록 유지·실패 부담이 커집니다. 유지가 나오면 이전 동물로 하락하며, 개 → 돼지 구간도 유지 판정이 적용됩니다.</div>
     </div>`;
   }).join('');
 }
@@ -556,11 +567,11 @@ function renderRules(){
   document.getElementById('probabilityTable').innerHTML = buildProbabilityHtml();
 
   if(state.stage <= 3) setFooter('초반은 비교적 쉽지만', `${state.stage}단계`, '초반에도 희귀·영웅·전설이 나오면 성공 확률이 더 낮습니다.');
-  else if(state.stage <= 7) setFooter('중반부터 난도가 올라갑니다', `${state.stage}단계`, '토끼 이후부터는 유지가 나오면 같은 동물에 머물면서 등급이 한 단계 하락합니다.');
-  else if(state.stage <= 10) setFooter('후반 도전 구간입니다', `${state.stage}단계`, '양·원숭이·닭 구간은 높은 등급일수록 성공이 더 낮고 유지·실패 리스크가 커집니다.');
+  else if(state.stage <= 7) setFooter('중반부터 난도가 올라갑니다', `${state.stage}단계`, '토끼 이후부터는 유지가 나오면 이전 동물로 한 단계 하락합니다. 3콤보를 넘기면 부활권 1개가 생성됩니다.');
+  else if(state.stage <= 10) setFooter('후반 도전 구간입니다', `${state.stage}단계`, '양·원숭이·닭 구간은 높은 등급일수록 성공이 더 낮고 유지·실패 리스크가 커집니다. 부활권이 있으면 실패한 동물에서 한 번 다시 도전합니다.');
   else {
     const c = state.currentCard;
-    setFooter('최종 관문입니다', `${state.stage}단계`, `개에서 돼지 승급은 현재 ${rarityLabel(c.rarity)} 등급 기준 성공 ${formatPercent(c.success)}, 실패 ${formatPercent(c.fail)}입니다. 이 구간은 유지가 없습니다.`);
+    setFooter('최종 관문입니다', `${state.stage}단계`, `개에서 돼지 승급은 현재 ${rarityLabel(c.rarity)} 등급 기준 성공 ${formatPercent(c.success)}, 유지 ${formatPercent(c.stay || 0)}, 실패 ${formatPercent(c.fail)}입니다.`);
   }
 }
 function renderRecentHistory(){
@@ -594,6 +605,22 @@ function renderAll(){
   renderCard();
   renderRules();
   renderRecentHistory();
+}
+
+function maybeGrantRevive(){
+  if(state.combo >= 3 && !state.reviveAvailable && !state.reviveGrantedRun){
+    state.reviveAvailable = true;
+    state.reviveGrantedRun = true;
+    return true;
+  }
+  return false;
+}
+function snapshotCurrentCard(current){
+  return {
+    stage: state.stage,
+    combo: state.combo,
+    card: {...current}
+  };
 }
 function startStage(){
   state.currentCard = spawnCard();
@@ -655,6 +682,12 @@ function showResult(type, message, reason){
     emoji.textContent = '↘️';
     msg.textContent = message;
     closeBtn.textContent = '이어하기';
+  }else if(type === 'revive'){
+    title.textContent = '부활권이 발동했습니다.';
+    hero.className = 'hero win';
+    emoji.textContent = '🪽';
+    msg.textContent = message;
+    closeBtn.textContent = '부활하기';
   }else{
     title.textContent = '실패했습니다.';
     hero.className = 'hero lose';
@@ -663,12 +696,16 @@ function showResult(type, message, reason){
     closeBtn.textContent = '다시 시작';
   }
 
-  spawnResultBurst(type === 'stay' ? 'win' : type);
+  spawnResultBurst(type === 'stay' || type === 'revive' ? 'win' : type);
   document.getElementById('resultLine1').textContent = reason;
   document.getElementById('resultLine2').textContent = `마지막 동물: ${c.baseName} · ${rarityLabel(c.rarity)}`;
   document.getElementById('resultLine3').textContent = type === 'win'
     ? '결과창을 닫으면 다시 쥐부터 새 도전이 시작됩니다.'
-    : (type === 'stay' ? '결과창을 닫으면 같은 동물에서 등급이 낮아진 상태로 다음 승급을 이어갑니다.' : '결과창을 닫으면 다시 쥐부터 시작합니다.');
+    : (type === 'stay'
+        ? '결과창을 닫으면 이전 동물로 하락한 상태에서 다음 승급을 이어갑니다.'
+        : (type === 'revive'
+            ? '결과창을 닫으면 방금 실패했던 동물과 등급 상태에서 즉시 재도전합니다.'
+            : '결과창을 닫으면 다시 쥐부터 시작합니다.'));
   document.getElementById('resultStageScore').textContent = `${state.stage}단계`;
   document.getElementById('resultComboScore').textContent = `${state.combo}`;
   document.getElementById('resultFailScore').textContent = `${state.failCount}`;
@@ -679,10 +716,25 @@ function resetRun(){
   state.stage = 1;
   state.combo = 0;
   state.attempt += 1;
+  state.reviveAvailable = false;
+  state.reviveGrantedRun = false;
+  state.reviveSnapshot = null;
   startStage();
 }
 function continueStage(){
   document.getElementById('resultOverlay').classList.remove('show');
+  state.pendingResult = null;
+  renderAll();
+}
+
+function reviveStage(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  if(state.reviveSnapshot){
+    state.stage = state.reviveSnapshot.stage;
+    state.combo = state.reviveSnapshot.combo;
+    state.currentCard = {...state.reviveSnapshot.card};
+  }
+  state.reviveSnapshot = null;
   state.pendingResult = null;
   renderAll();
 }
@@ -692,6 +744,11 @@ function closeResultAndRestart(){
   if(mode === 'continue'){
     state.afterCloseAction = null;
     continueStage();
+    return;
+  }
+  if(mode === 'revive'){
+    state.afterCloseAction = null;
+    reviveStage();
     return;
   }
   recordPendingResult();
@@ -716,6 +773,7 @@ function upgradeAction(){
 
   if(roll < current.success){
     state.combo += 1;
+    const grantedRevive = maybeGrantRevive();
     state.stage += 1;
     state.bestStage = Math.max(state.bestStage, state.stage);
     saveBest();
@@ -730,7 +788,7 @@ function upgradeAction(){
         rarityLabel:'전설',
         combo:state.combo,
         attempt:state.attempt,
-        reason:`${rarityLabel(current.rarity)} 등급 개에서 돼지 승급에 성공했습니다.`
+        reason:`${rarityLabel(current.rarity)} 등급 개에서 돼지 승급에 성공했습니다.${grantedRevive ? ' 이번 도전에서 사용할 부활권도 확보한 상태였습니다.' : ''}`
       };
       state.afterCloseAction = 'restart';
       showResult('win', '돼지가 만들어졌습니다. 미션을 달성하셨습니다.', `마지막 개 → 돼지 승급에 성공했습니다. 현재 등급 성공 확률은 ${formatPercent(current.success)}였습니다.`);
@@ -738,13 +796,15 @@ function upgradeAction(){
     }
 
     startStage();
+    if(grantedRevive){
+      document.getElementById('footerDesc').textContent = '3콤보를 달성해 부활권 1개를 획득했습니다. 이번 도전에서 첫 실패 시 현재 동물 상태로 1회 부활합니다.';
+    }
     return;
   }
 
   if(roll < current.success + (current.stay || 0)){
     const prevStage = Math.max(1, state.stage - 1);
     const prevAnimal = STAGES[prevStage - 1].baseName;
-    state.combo = 0;
     state.stage = prevStage;
     state.currentCard = cardForStage(state.stage, current.rarity);
     state.afterCloseAction = 'continue';
@@ -754,6 +814,16 @@ function upgradeAction(){
   }
 
   state.failCount += 1;
+
+  if(state.reviveAvailable){
+    state.reviveAvailable = false;
+    state.reviveSnapshot = snapshotCurrentCard(current);
+    state.pendingResult = null;
+    state.afterCloseAction = 'revive';
+    showResult('revive', `${current.baseName} 단계에서 실패했지만 부활권이 발동했습니다.`, `부활권이 소모되어 ${current.baseName} · ${rarityLabel(current.rarity)} 상태로 즉시 복구됩니다.`);
+    return;
+  }
+
   state.pendingResult = makeHistoryEntry('lose', current, `${current.baseName} 단계의 ${rarityLabel(current.rarity)} 등급 승급에 실패하여 다시 쥐부터 시작했습니다.`);
   state.afterCloseAction = 'restart';
   showResult('lose', `${current.baseName} 단계에서 실패했습니다. 다시 쥐부터 시작합니다.`, `현재 단계 성공 ${formatPercent(current.success)} / 유지 ${formatPercent(current.stay || 0)} / 실패 ${formatPercent(current.fail)}였습니다.`);
