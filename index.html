@@ -234,26 +234,25 @@
         <h1 class="title">Beast Battle Verifier UI</h1>
         <p class="subtitle">
           6개 입력만으로 점수를 조회하고, breakdown 확인, verify 검증, proof 저장까지 한 화면에서 수행합니다.
-          Sepolia 테스트넷 배포 주소를 넣고 MetaMask를 연결한 뒤 사용하면 됩니다.
+          Sepolia 테스트넷 배포 주소가 기본값으로 고정되어 있으며, 읽기 전용 조회는 지갑 없이 바로 사용할 수 있습니다.
         </p>
         <div class="status-row">
-          <div class="badge"><span>네트워크</span><strong id="networkBadge">미연결</strong></div>
-          <div class="badge"><span>지갑</span><strong id="walletBadge">미연결</strong></div>
+          <div class="badge"><span>네트워크</span><strong id="networkBadge">Sepolia RPC</strong></div>
+          <div class="badge"><span>모드</span><strong id="walletBadge">읽기 전용</strong></div>
           <div class="badge"><span>룰셋</span><strong id="rulesetBadge">미조회</strong></div>
         </div>
       </div>
       <div class="card">
         <h2 class="section-title">빠른 시작</h2>
         <div class="footer-note">
-          1. 컨트랙트 주소 입력<br/>
-          2. MetaMask 연결<br/>
+          1. 고정된 컨트랙트 주소 확인<br/>
+          2. 페이지 로드 시 자동 컨트랙트 연결<br/>
           3. 입력값 6개 확인<br/>
           4. 점수 조회 / verify 실행<br/>
-          5. 필요 시 proof 저장
+          5. proof 저장은 지갑 연결 버전에서만 가능
         </div>
         <div class="btn-row">
-          <button id="connectBtn">지갑 연결</button>
-          <button id="loadContractBtn" class="secondary">컨트랙트 로드</button>
+          <button id="loadContractBtn" class="secondary">컨트랙트 다시 로드</button>
         </div>
       </div>
     </section>
@@ -264,7 +263,7 @@
         <div class="form-grid">
           <div class="full">
             <label for="contractAddress">컨트랙트 주소</label>
-            <input id="contractAddress" placeholder="예: 0x1234..." />
+            <input id="contractAddress" value="0x2aC50659C5079A4C7809296Aa0ae14D4B99F5bba" readonly />
           </div>
           <div>
             <label for="beastId">동물 번호 (Beast ID)</label>
@@ -314,7 +313,7 @@
           <button id="scoreBtn" class="secondary">점수 조회 (Scaled)</button>
           <button id="breakdownBtn" class="secondary">Breakdown 조회</button>
           <button id="verifyBtn" class="secondary">Verify</button>
-          <button id="proofBtn" class="warn">Proof 저장</button>
+          <button id="proofBtn" class="warn" disabled>Proof 저장 (지갑 연결 버전 필요)</button>
         </div>
       </div>
 
@@ -338,7 +337,7 @@
             <div class="v" id="verifyStatus">-</div>
           </div>
         </div>
-        <div class="terminal mono" id="logArea">준비됨. 컨트랙트 주소를 넣고 지갑 연결 또는 컨트랙트 로드를 실행하세요.</div>
+        <div class="terminal mono" id="logArea">준비됨. 고정 컨트랙트 주소로 읽기 전용 모드가 자동 로드됩니다.</div>
       </div>
     </section>
   </div>
@@ -355,6 +354,7 @@
       "event ProofStored(bytes32 indexed proofId, bytes32 indexed inputHash, bytes32 outputHash, uint8 beastId, uint256 scaledScore, address indexed submitter)"
     ];
 
+    const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
     let provider = null;
     let signer = null;
     let contract = null;
@@ -389,23 +389,16 @@
 
     function requireContract(readOnly = true) {
       if (!contract) throw new Error("컨트랙트가 로드되지 않았습니다.");
-      if (!readOnly && !signer) throw new Error("트랜잭션 실행을 위해 지갑 연결이 필요합니다.");
+      if (!readOnly && !signer) throw new Error("이 페이지는 읽기 전용 버전입니다. Proof 저장은 지갑 연결 버전에서만 가능합니다.");
     }
 
-    async function connectWallet() {
-      if (!window.ethereum) {
-        appendLog("MetaMask가 설치되어 있지 않습니다.", "error");
-        return;
+    async function initProvider() {
+      if (!provider) {
+        provider = new ethers.JsonRpcProvider(RPC_URL);
       }
-      provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      const address = await signer.getAddress();
       const network = await provider.getNetwork();
-      setStatus("walletBadge", `${address.slice(0, 6)}...${address.slice(-4)}`);
       setStatus("networkBadge", `${network.name} (${network.chainId})`);
-      appendLog(`지갑 연결 완료: ${address}`, "ok");
-      await loadContract();
+      setStatus("walletBadge", "읽기 전용");
     }
 
     async function loadContract() {
@@ -415,8 +408,12 @@
         return;
       }
       try {
-        if (!provider) provider = window.ethereum ? new ethers.BrowserProvider(window.ethereum) : ethers.getDefaultProvider();
-        contract = new ethers.Contract(address, ABI, signer || provider);
+        await initProvider();
+        const code = await provider.getCode(address);
+        if (code === "0x") {
+          throw new Error("이 주소에는 현재 Sepolia 상의 컨트랙트 코드가 없습니다.");
+        }
+        contract = new ethers.Contract(address, ABI, provider);
         const ruleset = await contract.rulesetHash();
         setStatus("rulesetBadge", `${ruleset.slice(0, 10)}...${ruleset.slice(-8)}`);
         appendLog(`컨트랙트 로드 완료: ${address}`, "ok");
@@ -498,26 +495,18 @@
     }
 
     async function runStoreProof() {
-      try {
-        requireContract(false);
-        const x = toInputObject();
-        const expected = BigInt($("expectedScore").value.trim());
-        const tx = await contract.storeProof(x, expected);
-        appendLog(`Proof 저장 트랜잭션 전송: ${tx.hash}`, "ok");
-        const receipt = await tx.wait();
-        appendLog(`Proof 저장 완료. block=${receipt.blockNumber}`, "ok");
-      } catch (err) {
-        appendLog(`storeProof 실패: ${err.reason || err.message}`, "error");
-      }
+      appendLog("이 페이지는 읽기 전용 버전입니다. Proof 저장은 지갑 연결 버전에서만 가능합니다.", "error");
     }
-
-    $("connectBtn").addEventListener("click", connectWallet);
     $("loadContractBtn").addEventListener("click", loadContract);
     $("scoreHumanBtn").addEventListener("click", runScoreHuman);
     $("scoreBtn").addEventListener("click", runScore);
     $("breakdownBtn").addEventListener("click", runBreakdown);
     $("verifyBtn").addEventListener("click", runVerify);
     $("proofBtn").addEventListener("click", runStoreProof);
+
+    window.addEventListener("load", async () => {
+      await loadContract();
+    });
   </script>
 </body>
 </html>
