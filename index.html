@@ -234,26 +234,26 @@
         <h1 class="title">Beast Battle Verifier UI</h1>
         <p class="subtitle">
           6개 입력만으로 점수를 조회하고, breakdown 확인, verify 검증, proof 저장까지 한 화면에서 수행합니다.
-          Sepolia 테스트넷 배포 주소가 기본값으로 고정되어 있으며, MetaMask가 있으면 해당 연결을 우선 사용하고, 없으면 Sepolia 공개 RPC로 자동 조회합니다.
+          Sepolia 테스트넷 배포 주소를 넣고 MetaMask를 연결한 뒤 사용하면 됩니다.
         </p>
         <div class="status-row">
-          <div class="badge"><span>네트워크</span><strong id="networkBadge">연결 대기</strong></div>
-          <div class="badge"><span>모드</span><strong id="walletBadge">자동 감지</strong></div>
+          <div class="badge"><span>네트워크</span><strong id="networkBadge">미연결</strong></div>
+          <div class="badge"><span>지갑</span><strong id="walletBadge">미연결</strong></div>
           <div class="badge"><span>룰셋</span><strong id="rulesetBadge">미조회</strong></div>
         </div>
       </div>
       <div class="card">
         <h2 class="section-title">빠른 시작</h2>
         <div class="footer-note">
-          1. 고정된 컨트랙트 주소 확인<br/>
-          2. MetaMask가 있으면 브라우저 연결 우선 사용<br/>
-          3. 없으면 Sepolia 공개 RPC로 자동 조회<br/>
-          4. 입력값 6개 확인 후 점수 조회 / verify 실행<br/>
-          5. proof 저장은 MetaMask 연결 시에만 가능
+          1. 컨트랙트 주소 입력<br/>
+          2. MetaMask 연결<br/>
+          3. 입력값 6개 확인<br/>
+          4. 점수 조회 / verify 실행<br/>
+          5. 필요 시 proof 저장
         </div>
         <div class="btn-row">
-          <button id="connectBtn">MetaMask 연결(선택)</button>
-          <button id="loadContractBtn" class="secondary">컨트랙트 다시 로드</button>
+          <button id="connectBtn">지갑 연결</button>
+          <button id="loadContractBtn" class="secondary">컨트랙트 로드</button>
         </div>
       </div>
     </section>
@@ -264,7 +264,7 @@
         <div class="form-grid">
           <div class="full">
             <label for="contractAddress">컨트랙트 주소</label>
-            <input id="contractAddress" value="0x2aC50659C5079A4C7809296Aa0ae14D4B99F5bba" readonly />
+            <input id="contractAddress" placeholder="예: 0x1234..." />
           </div>
           <div>
             <label for="beastId">동물 번호 (Beast ID)</label>
@@ -338,7 +338,7 @@
             <div class="v" id="verifyStatus">-</div>
           </div>
         </div>
-        <div class="terminal mono" id="logArea">준비됨. MetaMask가 있으면 우선 사용하고, 없으면 여러 Sepolia RPC 중 사용 가능한 엔드포인트로 자동 연결합니다.</div>
+        <div class="terminal mono" id="logArea">준비됨. 컨트랙트 주소를 넣고 지갑 연결 또는 컨트랙트 로드를 실행하세요.</div>
       </div>
     </section>
   </div>
@@ -355,15 +355,9 @@
       "event ProofStored(bytes32 indexed proofId, bytes32 indexed inputHash, bytes32 outputHash, uint8 beastId, uint256 scaledScore, address indexed submitter)"
     ];
 
-    const RPC_URLS = [
-      "https://rpc.sepolia.org",
-      "https://ethereum-sepolia.publicnode.com",
-      "https://sepolia.gateway.tenderly.co"
-    ];
     let provider = null;
     let signer = null;
     let contract = null;
-    let currentMode = "미연결";
 
     const $ = (id) => document.getElementById(id);
 
@@ -395,113 +389,23 @@
 
     function requireContract(readOnly = true) {
       if (!contract) throw new Error("컨트랙트가 로드되지 않았습니다.");
-      if (!readOnly && !signer) throw new Error("Proof 저장은 MetaMask 연결이 필요합니다.");
+      if (!readOnly && !signer) throw new Error("트랜잭션 실행을 위해 지갑 연결이 필요합니다.");
     }
 
-    async function initProvider() {
-      if (provider) return;
-
-      // 1) Prefer MetaMask / injected provider for both read and write when available
-      if (window.ethereum) {
-        try {
-          const browserProvider = new ethers.BrowserProvider(window.ethereum);
-          const network = await browserProvider.getNetwork();
-          if (String(network.chainId) === "11155111") {
-            provider = browserProvider;
-            currentMode = "MetaMask 연결";
-            setStatus("networkBadge", `${network.name} (${network.chainId})`);
-            setStatus("walletBadge", currentMode);
-            try {
-              // signer may fail if user has not approved accounts yet
-              signer = await browserProvider.getSigner();
-              const addr = await signer.getAddress();
-              setStatus("walletBadge", `${addr.slice(0, 6)}...${addr.slice(-4)}`);
-              currentMode = "MetaMask 서명 가능";
-            } catch {
-              signer = null;
-              setStatus("walletBadge", "MetaMask 읽기 연결");
-              currentMode = "MetaMask 읽기 연결";
-            }
-            appendLog("MetaMask(Sepolia) 연결을 우선 사용합니다.", "ok");
-            return;
-          } else {
-            appendLog(`MetaMask 체인이 Sepolia가 아닙니다. chainId=${network.chainId}. 공개 RPC로 fallback 합니다.`, "error");
-          }
-        } catch (err) {
-          appendLog(`MetaMask 연결 실패: ${err.message}. 공개 RPC로 fallback 합니다.`, "error");
-        }
-      }
-
-      // 2) Fallback to public Sepolia RPCs
-      let lastError = null;
-      for (const url of RPC_URLS) {
-        try {
-          const candidate = new ethers.JsonRpcProvider(url);
-          const network = await candidate.getNetwork();
-          if (String(network.chainId) !== "11155111") {
-            throw new Error(`잘못된 체인 ID: ${network.chainId}`);
-          }
-          provider = candidate;
-          signer = null;
-          currentMode = "읽기 전용";
-          setStatus("networkBadge", `Sepolia RPC`);
-          setStatus("walletBadge", currentMode);
-          appendLog(`RPC 연결 성공: ${url}`, "ok");
-          return;
-        } catch (err) {
-          lastError = err;
-          appendLog(`RPC 연결 실패: ${url} / ${err.message}`, "error");
-        }
-      }
-
-      throw new Error(`사용 가능한 Sepolia 연결을 찾지 못했습니다. 마지막 오류: ${lastError?.message || "unknown"}`);
-    }
-
-    async function connectIfPossible() {
+    async function connectWallet() {
       if (!window.ethereum) {
-        appendLog("MetaMask가 없어 공개 RPC 읽기 모드로 유지합니다.", "info");
+        appendLog("MetaMask가 설치되어 있지 않습니다.", "error");
         return;
       }
-      try {
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        await browserProvider.send("eth_requestAccounts", []);
-        const network = await browserProvider.getNetwork();
-        if (String(network.chainId) !== "11155111") {
-          throw new Error(`MetaMask가 Sepolia가 아닙니다. chainId=${network.chainId}`);
-        }
-        provider = browserProvider;
-        signer = await browserProvider.getSigner();
-        const addr = await signer.getAddress();
-        currentMode = "MetaMask 서명 가능";
-        setStatus("networkBadge", `${network.name} (${network.chainId})`);
-        setStatus("walletBadge", `${addr.slice(0, 6)}...${addr.slice(-4)}`);
-        appendLog(`MetaMask 연결 완료: ${addr}`, "ok");
-        await loadContract();
-      } catch (err) {
-        appendLog(`MetaMask 연결 실패: ${err.message}`, "error");
-      }
-    }
-
-    async function bindContract(address, providersToTry) {
-      let lastError = null;
-      for (const p of providersToTry) {
-        if (!p) continue;
-        try {
-          const code = await p.getCode(address);
-          if (code === "0x") {
-            throw new Error("현재 연결에서 getCode 결과가 0x 입니다.");
-          }
-          const bound = new ethers.Contract(address, ABI, signer && p === provider ? signer : p);
-          const ruleset = await bound.rulesetHash();
-          contract = bound;
-          setStatus("rulesetBadge", `${ruleset.slice(0, 10)}...${ruleset.slice(-8)}`);
-          return true;
-        } catch (err) {
-          lastError = err;
-          appendLog(`컨트랙트 바인딩 재시도: ${err.message}`, "error");
-        }
-      }
-      throw lastError || new Error("컨트랙트 바인딩 실패");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      const network = await provider.getNetwork();
+      setStatus("walletBadge", `${address.slice(0, 6)}...${address.slice(-4)}`);
+      setStatus("networkBadge", `${network.name} (${network.chainId})`);
+      appendLog(`지갑 연결 완료: ${address}`, "ok");
+      await loadContract();
     }
 
     async function loadContract() {
@@ -511,17 +415,10 @@
         return;
       }
       try {
-        await initProvider();
-
-        // 우선 현재 provider로 시도
-        const tryProviders = [provider];
-
-        // 현재 provider가 MetaMask일 때도 공개 RPC로 한번 더 보조 확인
-        for (const url of RPC_URLS) {
-          tryProviders.push(new ethers.JsonRpcProvider(url));
-        }
-
-        await bindContract(address, tryProviders);
+        if (!provider) provider = window.ethereum ? new ethers.BrowserProvider(window.ethereum) : ethers.getDefaultProvider();
+        contract = new ethers.Contract(address, ABI, signer || provider);
+        const ruleset = await contract.rulesetHash();
+        setStatus("rulesetBadge", `${ruleset.slice(0, 10)}...${ruleset.slice(-8)}`);
         appendLog(`컨트랙트 로드 완료: ${address}`, "ok");
       } catch (err) {
         appendLog(`컨트랙트 로드 실패: ${err.message}`, "error");
@@ -613,17 +510,14 @@
         appendLog(`storeProof 실패: ${err.reason || err.message}`, "error");
       }
     }
-    $("connectBtn").addEventListener("click", connectIfPossible);
+
+    $("connectBtn").addEventListener("click", connectWallet);
     $("loadContractBtn").addEventListener("click", loadContract);
     $("scoreHumanBtn").addEventListener("click", runScoreHuman);
     $("scoreBtn").addEventListener("click", runScore);
     $("breakdownBtn").addEventListener("click", runBreakdown);
     $("verifyBtn").addEventListener("click", runVerify);
     $("proofBtn").addEventListener("click", runStoreProof);
-
-    window.addEventListener("load", async () => {
-      await loadContract();
-    });
   </script>
 </body>
 </html>
