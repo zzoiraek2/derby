@@ -1,840 +1,523 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>십이지신 승급 도전 - 등급 확률 반영</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" crossorigin />
-<link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet" />
-<style>
-:root{
-  --bg:#0d1020; --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.09); --text:#f8fafc; --muted:#b9c2d8;
-  --brand:#889ADF; --brand2:#5C6AC4; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
-  --shadow:0 18px 40px rgba(0,0,0,.28); font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{margin:0;height:100%;background:radial-gradient(circle at top,#20284f 0%,#13182e 42%,#0d1020 100%);color:var(--text)}
-body{display:flex;justify-content:center;align-items:center}
-.app{
-  width:100vw;height:100vh;position:relative;overflow:hidden;display:flex;flex-direction:column;
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
-}
-@media (min-width:780px){
-  body{padding:20px}
-  .app{width:392px;height:min(844px,calc(100vh - 40px));border-radius:38px;box-shadow:0 28px 90px rgba(0,0,0,.38)}
-}
-.header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.05);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0))}
-.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.title{font-size:22px;font-weight:900;letter-spacing:-.03em;margin:20px 6px 4px}
-.subtitle{margin:0 6px;font-size:11px;line-height:1.5;color:var(--muted);font-weight:800}
-.bestbox{padding:8px 20px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:84px;text-align:right}
-.bestbox .k{font-size:10px;color:var(--muted);font-weight:900}
-.bestbox .v{margin-top:4px;font-size:18px;font-weight:900;color:#86efac}
-.main{flex:1;overflow:auto;padding:12px 14px 110px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:22px;padding:12px;box-shadow:var(--shadow);margin-bottom:10px;backdrop-filter:blur(16px)}
-.section-title{margin:0 0 9px;font-size:12px;font-weight:900;color:#dbe5ff}
-.topstats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.stat{padding:9px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.035)}
-.stat .k{font-size:10px;color:var(--muted);font-weight:900}
-.stat .v{margin-top:5px;font-size:18px;font-weight:900}
-.span2{grid-column:span 2}.span4{grid-column:span 4}
-.center-card{text-align:center;padding:12px;border-radius:22px;background:linear-gradient(180deg,rgba(92,106,196,.14),rgba(92,106,196,.05));border:1px solid rgba(136,154,223,.18)}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.stage-pill,.rarity-pill{padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}
-.stage-pill{background:rgba(255,255,255,.08)}
-.rarity-pill.common{background:rgba(255,255,255,.08);color:#dbe5ff}
-.rarity-pill.rare{background:rgba(96,165,250,.18);color:#bfdbfe}
-.rarity-pill.epic{background:rgba(168,85,247,.18);color:#ddd6fe}
-.rarity-pill.legend{background:rgba(251,191,36,.18);color:#fde68a}
-.emoji{font-size:54px;line-height:1}
-.name{margin-top:4px;font-size:28px;font-weight:900;letter-spacing:-.04em}
-.desc{margin-top:5px;font-size:12px;color:var(--muted);font-weight:800;line-height:1.55}
-.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.rate-box{padding:10px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
-.rate-box .label{font-size:10px;color:var(--muted);font-weight:900}
-.rate-box .num{margin-top:5px;font-size:24px;font-weight:900}
-.rate-box.success .num{color:#86efac}.rate-box.stay .num{color:#fde68a}.rate-box.fail .num{color:#fca5a5}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center}
-.tag{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.06);font-size:10px;font-weight:900;color:#d2dbef;border:1px solid rgba(255,255,255,.05)}
-.tag.good{background:rgba(34,197,94,.16);color:#86efac}.tag.warn{background:rgba(245,158,11,.16);color:#fdba74}.tag.bad{background:rgba(239,68,68,.16);color:#fca5a5}
-.actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
-.btn{min-height:52px;border:none;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer}
-.btn.primary{background:linear-gradient(180deg,#7287f2,#5C6AC4);color:#fff}
-.item{padding:10px 11px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);margin-bottom:8px}
-.item .name{font-size:13px;font-weight:900}.item .sub{margin-top:5px;font-size:11px;line-height:1.55;color:var(--muted);font-weight:800}
-.footer{position:absolute;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));padding:11px;border-radius:20px;background:rgba(12,16,32,.84);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}
-.footer-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.footer-title{font-size:13px;font-weight:900}.footer-desc{margin-top:7px;font-size:11px;line-height:1.45;color:var(--muted);font-weight:800}.pill{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.08);font-size:10px;font-weight:900}
-.overlay{position:fixed;inset:0;background:radial-gradient(circle at center, rgba(28,36,72,.55) 0%, rgba(0,0,0,.82) 72%);display:none;align-items:center;justify-content:center;z-index:60;padding:18px;backdrop-filter:blur(8px)}
-.overlay.show{display:flex;animation:overlayFade .22s ease-out}
-.modal{position:relative;width:min(100%,430px);background:linear-gradient(180deg,#20284a 0%,#151a30 54%,#101426 100%);border:1px solid rgba(255,255,255,.10);border-radius:30px;box-shadow:0 26px 64px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);padding:18px;overflow:hidden;transform-origin:center center}
-.modal::before{content:"";position:absolute;inset:-2px;background:conic-gradient(from 180deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0) 40%);opacity:.28;pointer-events:none}
-.modal.win{animation:modalPop .34s cubic-bezier(.2,.9,.2,1.1)}
-.modal.stay{animation:modalPop .28s cubic-bezier(.2,.9,.2,1.05)}
-.modal.lose{animation:modalShake .44s ease-out}
-.modal h3{position:relative;margin:0 0 8px;font-size:28px;font-weight:900;letter-spacing:-.03em}.modal p{position:relative;margin:0 0 12px;font-size:13px;line-height:1.6;color:var(--muted);font-weight:800}
-.result-box{position:relative;padding:13px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid var(--line);margin-top:10px;overflow:hidden}
-.result-box::after{content:"";position:absolute;inset:-30% auto auto -10%;width:52%;height:180%;background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.13), rgba(255,255,255,0));transform:rotate(16deg);animation:shineSweep 2.8s linear infinite;pointer-events:none}
-.result-line{font-size:14px;font-weight:900;margin-bottom:6px;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
-.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.score-card{padding:10px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}.score-card .k{font-size:11px;color:#b9c2d8;font-weight:900}.score-card .v{margin-top:4px;font-size:16px;font-weight:900}
-.hero{position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:126px;margin:4px 0 12px;border-radius:24px;border:1px solid rgba(255,255,255,.08);overflow:hidden;isolation:isolate}
-.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
-.hero.win{background:radial-gradient(circle at 50% 38%, rgba(250,204,21,.34) 0%, rgba(34,197,94,.16) 34%, rgba(34,197,94,.05) 72%)}
-.hero.win::before{width:140px;height:140px;background:radial-gradient(circle, rgba(255,255,255,.46) 0%, rgba(255,255,255,0) 62%);animation:pulseHalo 1.6s ease-in-out infinite}
-.hero.win::after{inset:18px;border:1px solid rgba(255,255,255,.18);animation:spinRing 7s linear infinite}
-.hero.stay{background:radial-gradient(circle at 50% 38%, rgba(250,204,21,.22) 0%, rgba(245,158,11,.11) 38%, rgba(245,158,11,.05) 72%)}
-.hero.stay::before{width:150px;height:150px;border:2px solid rgba(253,224,71,.22);animation:pulseHalo 1.4s ease-in-out infinite}
-.hero.stay::after{inset:20px;border:1px dashed rgba(253,224,71,.28);animation:spinRing 10s linear infinite}
-.hero.lose{background:radial-gradient(circle at 50% 38%, rgba(248,113,113,.26) 0%, rgba(239,68,68,.12) 38%, rgba(239,68,68,.05) 72%)}
-.hero.lose::before{width:170px;height:170px;border:2px solid rgba(252,165,165,.22);animation:impactRing 1.15s ease-out infinite}
-.hero.lose::after{width:88px;height:88px;background:radial-gradient(circle, rgba(255,255,255,.18), rgba(255,255,255,0) 68%);animation:crackPulse .9s ease-in-out infinite}
-.hero .emoji{position:relative;z-index:2;font-size:62px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28))}
-.modal.win .hero .emoji{animation:trophyBounce 1.2s ease-in-out infinite}
-.modal.stay .hero .emoji{animation:trophyBounce 1.5s ease-in-out infinite}
-.modal.lose .hero .emoji{animation:loseDrop .9s ease-in-out infinite}
-.fx-burst{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
-.fx-piece{position:absolute;top:50%;left:50%;width:10px;height:18px;border-radius:999px;opacity:.92;transform:translate(-50%,-50%) rotate(0deg);animation:burstOut .95s ease-out forwards}
-.fx-piece.spark{width:7px;height:7px;border-radius:50%;box-shadow:0 0 10px currentColor}
-@keyframes overlayFade{from{opacity:0}to{opacity:1}}
-@keyframes modalPop{0%{transform:scale(.86) translateY(12px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
-@keyframes modalShake{0%{transform:scale(.96) translateX(0)}22%{transform:scale(1.01) translateX(-7px)}44%{transform:translateX(6px)}66%{transform:translateX(-4px)}100%{transform:translateX(0)}}
-@keyframes shineSweep{0%{transform:translateX(-160%) rotate(16deg)}100%{transform:translateX(320%) rotate(16deg)}}
-@keyframes pulseHalo{0%,100%{transform:scale(.92);opacity:.72}50%{transform:scale(1.1);opacity:1}}
-@keyframes spinRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes impactRing{0%{transform:scale(.38);opacity:.52}100%{transform:scale(1.04);opacity:0}}
-@keyframes crackPulse{0%,100%{transform:scale(.9);opacity:.65}50%{transform:scale(1.08);opacity:1}}
-@keyframes trophyBounce{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-8px) scale(1.06)}55%{transform:translateY(0) scale(.98)}}
-@keyframes loseDrop{0%,100%{transform:translateY(0) rotate(0deg)}35%{transform:translateY(4px) rotate(-5deg)}65%{transform:translateY(-2px) rotate(4deg)}}
-@keyframes burstOut{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(var(--rot))}18%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.05) rotate(var(--rot))}}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beast Battle Verifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a31;
+      --panel-2: #182241;
+      --line: rgba(255,255,255,0.08);
+      --text: #eef3ff;
+      --muted: #9fb0d0;
+      --accent: #6ea8fe;
+      --accent-2: #8b5cf6;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --shadow: 0 12px 36px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
 
-.history-list{display:grid;gap:10px}
-.history-card{padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
-.history-card.win{border-color:rgba(134,239,172,.35);box-shadow:inset 0 0 0 1px rgba(134,239,172,.08)}
-.history-card.lose{border-color:rgba(251,113,133,.28);box-shadow:inset 0 0 0 1px rgba(251,113,133,.06)}
-.history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-.history-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:.02em}
-.history-badge.win{background:rgba(34,197,94,.16);color:#86efac}
-.history-badge.lose{background:rgba(239,68,68,.16);color:#fda4af}
-.history-step{font-size:12px;font-weight:900;color:var(--text)}
-.history-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
-.history-mini{padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-.history-mini .k{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.history-mini .v{font-size:13px;font-weight:900}.history-reason{font-size:12px;line-height:1.5;color:var(--muted);font-weight:700}
-.probability-group{margin-top:10px;padding:10px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05)}
-.probability-group:first-child{margin-top:0}
-.probability-group .group-title{font-size:12px;font-weight:900;margin-bottom:8px}
-.probability-group.common .group-title{color:#dbe5ff}
-.probability-group.rare .group-title{color:#bfdbfe}
-.probability-group.epic .group-title{color:#ddd6fe}
-.probability-group.legend .group-title{color:#fde68a}
-.probability-row{font-size:11px;line-height:1.65;color:var(--muted);font-weight:800}
-.probability-note{margin:8px 0 0;font-size:10px;line-height:1.5;color:var(--muted);font-weight:800}
-.probability-table-wrap{overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.06)}
-.probability-table{width:100%;border-collapse:collapse;min-width:320px;background:rgba(255,255,255,.02)}
-.probability-table th,.probability-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;text-align:left}
-.probability-table th{position:sticky;top:0;background:#141a31;color:#e8eeff;font-weight:900;z-index:1}
-.probability-table td{color:var(--muted);font-weight:800}
-.probability-table tr:last-child td{border-bottom:none}
-.probability-table td.success{color:#86efac}
-.probability-table td.stay{color:#fde68a}
-.probability-table td.fail{color:#fca5a5}
-.mono{font-variant-numeric:tabular-nums}
-@media (max-width:640px){.history-meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
-</style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #192448 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1200px, calc(100% - 24px));
+      margin: 24px auto 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 13px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(110,168,254,0.65);
+      box-shadow: 0 0 0 3px rgba(110,168,254,0.12);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow);
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--line);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    button.warn {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .metric .k {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .metric .v {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      word-break: break-all;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .terminal {
+      min-height: 160px;
+      background: #09101f;
+      border: 1px solid var(--line);
+      color: #d8e5ff;
+      border-radius: 16px;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 12px;
+    }
+
+    .ok { color: var(--good); }
+    .bad { color: var(--bad); }
+    .muted { color: var(--muted); }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .grid, .form-grid { grid-template-columns: 1fr; }
+      .wrap { width: min(100%, calc(100% - 16px)); margin-top: 12px; }
+      .title { font-size: 24px; }
+      .result-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="title">십이지신 승급 도전</div>
-        <div class="subtitle">쥐부터 시작해 마지막 돼지까지 도달하면 성공입니다. 성공하면 다음 동물로 승급하고, 유지가 나오면 이전 동물로 한 단계 하락합니다. 실패하면 다시 쥐부터 시작하지만, 3콤보 이상을 달성한 상태라면 1회 부활권이 생성되어 실패한 동물에서 한 번 다시 도전할 수 있습니다.</div>
-      </div>
-      <div class="bestbox">
-        <div class="k">최고 도달</div>
-        <div class="v" id="bestValue">쥐</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="main">
-    <div class="card">
-      <div class="section-title">현재 상태</div>
-      <div class="topstats">
-        <div class="stat"><div class="k">도전 횟수</div><div class="v" id="attemptValue">1</div></div>
-        <div class="stat"><div class="k">현재 단계</div><div class="v" id="stageValue">1</div></div>
-        <div class="stat"><div class="k">현재 동물</div><div class="v" id="currentAnimalMini">쥐</div></div>
-        <div class="stat"><div class="k">연속 성공</div><div class="v" id="comboValue">0</div></div>
-        <div class="stat"><div class="k">누적 실패</div><div class="v" id="failCountValue">0</div></div>
-        <div class="stat"><div class="k">부활권</div><div class="v" id="reviveValue">없음</div></div>
-        <div class="stat span2"><div class="k">목표</div><div class="v">돼지 달성</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">현재 승급 카드</div>
-      <div class="center-card">
-        <div class="card-top">
-          <div class="stage-pill" id="stagePill">1단계</div>
-          <div class="rarity-pill common" id="rarityPill">일반</div>
+  <div class="wrap">
+    <section class="hero">
+      <div class="card">
+        <h1 class="title">Beast Battle Verifier UI</h1>
+        <p class="subtitle">
+          6개 입력만으로 점수를 조회하고, breakdown 확인, verify 검증, proof 저장까지 한 화면에서 수행합니다.
+          Sepolia 테스트넷 배포 주소를 넣고 MetaMask를 연결한 뒤 사용하면 됩니다.
+        </p>
+        <div class="status-row">
+          <div class="badge"><span>네트워크</span><strong id="networkBadge">미연결</strong></div>
+          <div class="badge"><span>지갑</span><strong id="walletBadge">미연결</strong></div>
+          <div class="badge"><span>룰셋</span><strong id="rulesetBadge">미조회</strong></div>
         </div>
-        <div class="emoji" id="animalEmoji">🐭</div>
-        <div class="name" id="animalName">들쥐</div>
-        <div class="desc" id="animalDesc">현재 쥐 단계입니다. 승급 성공 시 다음 동물로 이동하고, 실패 시 다시 쥐부터 시작합니다.</div>
+      </div>
+      <div class="card">
+        <h2 class="section-title">빠른 시작</h2>
+        <div class="footer-note">
+          1. 컨트랙트 주소 입력<br/>
+          2. MetaMask 연결<br/>
+          3. 입력값 6개 확인<br/>
+          4. 점수 조회 / verify 실행<br/>
+          5. 필요 시 proof 저장
+        </div>
+        <div class="btn-row">
+          <button id="connectBtn">지갑 연결</button>
+          <button id="loadContractBtn" class="secondary">컨트랙트 로드</button>
+        </div>
+      </div>
+    </section>
 
-        <div class="rate-grid">
-          <div class="rate-box success">
-            <div class="label">성공</div>
-            <div class="num mono" id="successRate">100%</div>
+    <section class="grid">
+      <div class="card">
+        <h2 class="section-title">컨트랙트 / 입력값</h2>
+        <div class="form-grid">
+          <div class="full">
+            <label for="contractAddress">컨트랙트 주소</label>
+            <input id="contractAddress" placeholder="예: 0x1234..." />
           </div>
-          <div class="rate-box stay">
-            <div class="label">유지</div>
-            <div class="num mono" id="stayRate">0%</div>
+          <div>
+            <label for="beastId">동물 번호 (Beast ID)</label>
+            <select id="beastId">
+              <option value="1">1 - Army Ant</option>
+              <option value="2">2 - Bear</option>
+              <option value="3">3 - Lion</option>
+              <option value="4">4 - Fox</option>
+              <option value="5">5 - Dragon</option>
+              <option value="6">6 - Scorpion</option>
+              <option value="7">7 - Warhorse</option>
+              <option value="8">8 - Ram</option>
+              <option value="9">9 - Raccoon</option>
+              <option value="10">10 - Rooster</option>
+              <option value="11">11 - Wolf</option>
+              <option value="12">12 - Frog</option>
+            </select>
           </div>
-          <div class="rate-box fail">
-            <div class="label">실패</div>
-            <div class="num mono" id="failRate">0%</div>
+          <div>
+            <label for="pulse">맥박 (Pulse)</label>
+            <input id="pulse" type="number" value="28" />
+          </div>
+          <div>
+            <label for="prevSeedA">이전 블록정보 A</label>
+            <input id="prevSeedA" value="4017" />
+          </div>
+          <div>
+            <label for="prevSeedB">이전 블록정보 B</label>
+            <input id="prevSeedB" value="31472061591" />
+          </div>
+          <div>
+            <label for="nextSeedA">확정 블록정보 A</label>
+            <input id="nextSeedA" value="1325" />
+          </div>
+          <div>
+            <label for="nextSeedB">확정 블록정보 B</label>
+            <input id="nextSeedB" value="190396140419" />
+          </div>
+          <div>
+            <label for="expectedScore">예상 Scaled Score</label>
+            <input id="expectedScore" value="323000" />
           </div>
         </div>
 
-        <div class="tags" id="cardTags"></div>
-
-        <div class="actions">
-          <button class="btn primary" id="upgradeBtn">승급</button>
+        <div class="btn-row">
+          <button id="scoreHumanBtn">점수 조회 (Human)</button>
+          <button id="scoreBtn" class="secondary">점수 조회 (Scaled)</button>
+          <button id="breakdownBtn" class="secondary">Breakdown 조회</button>
+          <button id="verifyBtn" class="secondary">Verify</button>
+          <button id="proofBtn" class="warn">Proof 저장</button>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="section-title">최근 기록</div>
-      <div class="history-list" id="recentHistoryList">
-        <div class="item"><div class="sub">아직 기록이 없습니다. 성공 또는 실패 결과창을 닫으면 여기에 최근 기록이 남습니다.</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">등급별 확률 규칙</div>
-      <div class="item">
-        <div class="name">승급 규칙</div>
-        <div class="sub">성공 시 다음 동물로 승급합니다. 유지 시 이전 동물로 한 단계 하락합니다. 실패 시 즉시 쥐로 초기화되지만, 3콤보 이상으로 획득한 부활권이 있으면 실패한 동물 상태에서 1회 부활합니다.</div>
-      </div>
-      <div class="item">
-        <div class="name">등급 출현 확률</div>
-        <div class="sub mono">일반 58% · 희귀 25% · 영웅 12% · 전설 5%</div>
-      </div>
-      <div class="item">
-        <div class="name">부활권 규칙</div>
-        <div class="sub">연속 성공 3콤보 이상 달성 시 이번 도전 동안 사용할 수 있는 부활권 1개가 생성됩니다. 부활권 보유 중 실패하면 즉시 소모되며, 방금 실패했던 동물과 등급 상태로 되살아납니다.</div>
-      </div>
-      <div class="item">
-        <div class="name">등급별 성공 · 유지 · 실패 확률표</div>
-        <div class="sub" id="probabilityTable"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <div class="footer-top">
-      <div class="footer-title" id="footerTitle">초반은 비교적 쉽지만</div>
-      <div class="pill" id="footerPill">1단계</div>
-    </div>
-    <div class="footer-desc" id="footerDesc">후반으로 갈수록 난도가 올라가며, 유지는 이전 동물로 하락합니다. 3콤보 이상이면 부활권 1개가 생성되고, 마지막 개 → 돼지에도 유지 구간이 존재합니다.</div>
-  </div>
-</div>
-
-<div class="overlay" id="resultOverlay">
-  <div class="modal">
-    <h3 id="resultTitle">결과</h3>
-    <div class="hero" id="resultHero"><div class="fx-burst" id="resultBurst"></div><div class="emoji" id="resultEmoji">✨</div></div>
-    <p id="resultMessage">결과 메시지</p>
-    <div class="result-box">
-      <div class="result-line" id="resultLine1"></div>
-      <div class="result-line" id="resultLine2"></div>
-      <div class="result-line" id="resultLine3"></div>
-      <div class="score-grid">
-        <div class="score-card"><div class="k">도달 단계</div><div class="v" id="resultStageScore">0</div></div>
-        <div class="score-card"><div class="k">연속 성공</div><div class="v" id="resultComboScore">0</div></div>
-        <div class="score-card"><div class="k">누적 실패</div><div class="v" id="resultFailScore">0</div></div>
-        <div class="score-card"><div class="k">도전 횟수</div><div class="v" id="resultAttemptScore">0</div></div>
-      </div>
-    </div>
-    <div class="actions" style="grid-template-columns:1fr;margin-top:14px">
-      <button class="btn primary" id="resultCloseBtn">다시 시작</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const STORAGE_KEY = 'zodiac_challenge_best_v3';
-const RESULT_HISTORY_KEY = 'zodiac_challenge_result_history_v3';
-
-const STAGES = [
-  {id:'rat', baseName:'쥐', emoji:'🐭', next:'소'},
-  {id:'ox', baseName:'소', emoji:'🐮', next:'호랑이'},
-  {id:'tiger', baseName:'호랑이', emoji:'🐯', next:'토끼'},
-  {id:'rabbit', baseName:'토끼', emoji:'🐰', next:'용'},
-  {id:'dragon', baseName:'용', emoji:'🐉', next:'뱀'},
-  {id:'snake', baseName:'뱀', emoji:'🐍', next:'말'},
-  {id:'horse', baseName:'말', emoji:'🐴', next:'양'},
-  {id:'goat', baseName:'양', emoji:'🐐', next:'원숭이'},
-  {id:'monkey', baseName:'원숭이', emoji:'🐵', next:'닭'},
-  {id:'rooster', baseName:'닭', emoji:'🐔', next:'개'},
-  {id:'dog', baseName:'개', emoji:'🐶', next:'돼지'},
-  {id:'pig', baseName:'돼지', emoji:'🐷', next:'완료'}
-];
-
-const RARITY_META = {
-  common:{label:'일반', className:'common', weight:58},
-  rare:{label:'희귀', className:'rare', weight:25},
-  epic:{label:'영웅', className:'epic', weight:12},
-  legend:{label:'전설', className:'legend', weight:5}
-};
-
-const RATE_TABLE = {
-  common:[
-    {success:100, stay:0, fail:0},
-    {success:80, stay:15, fail:5},
-    {success:70, stay:20, fail:10},
-    {success:62, stay:23, fail:15},
-    {success:55, stay:27, fail:18},
-    {success:48, stay:32, fail:20},
-    {success:42, stay:35, fail:23},
-    {success:35, stay:40, fail:25},
-    {success:28, stay:45, fail:27},
-    {success:20, stay:48, fail:32},
-    {success:6, stay:24, fail:70}
-  ],
-  rare:[
-    {success:100, stay:0, fail:0},
-    {success:72, stay:18, fail:10},
-    {success:62, stay:22, fail:16},
-    {success:54, stay:26, fail:20},
-    {success:46, stay:30, fail:24},
-    {success:38, stay:34, fail:28},
-    {success:32, stay:38, fail:30},
-    {success:26, stay:42, fail:32},
-    {success:20, stay:45, fail:35},
-    {success:14, stay:48, fail:38},
-    {success:4, stay:26, fail:70}
-  ],
-  epic:[
-    {success:100, stay:0, fail:0},
-    {success:65, stay:20, fail:15},
-    {success:55, stay:25, fail:20},
-    {success:45, stay:30, fail:25},
-    {success:38, stay:33, fail:29},
-    {success:30, stay:36, fail:34},
-    {success:24, stay:40, fail:36},
-    {success:18, stay:43, fail:39},
-    {success:12, stay:46, fail:42},
-    {success:8, stay:48, fail:44},
-    {success:2, stay:28, fail:70}
-  ],
-  legend:[
-    {success:100, stay:0, fail:0},
-    {success:58, stay:22, fail:20},
-    {success:48, stay:26, fail:26},
-    {success:38, stay:30, fail:32},
-    {success:30, stay:33, fail:37},
-    {success:24, stay:36, fail:40},
-    {success:18, stay:40, fail:42},
-    {success:12, stay:43, fail:45},
-    {success:8, stay:46, fail:46},
-    {success:5, stay:48, fail:47},
-    {success:1, stay:29, fail:70}
-  ]
-};
-
-const VARIANTS = {
-  rat: {
-    common:{name:'들쥐', tags:['기본 시작']},
-    rare:{name:'민첩쥐', tags:['희귀 시작']},
-    epic:{name:'영수쥐', tags:['영웅 시작']},
-    legend:{name:'황금쥐', tags:['전설 시작']}
-  },
-  ox: {
-    common:{name:'짐소', tags:['우직한 발걸음']},
-    rare:{name:'강철소', tags:['단단한 중반']},
-    epic:{name:'천우', tags:['영웅 개체']},
-    legend:{name:'성우', tags:['전설 기운']}
-  },
-  tiger: {
-    common:{name:'산호랑이', tags:['기세 상승']},
-    rare:{name:'백호', tags:['희귀 맹수']},
-    epic:{name:'영호', tags:['영웅 포효']},
-    legend:{name:'왕호', tags:['전설 맹호']}
-  },
-  rabbit: {
-    common:{name:'들토끼', tags:['빠른 발']},
-    rare:{name:'달토끼', tags:['도약형']},
-    epic:{name:'월영토끼', tags:['영웅 반전']},
-    legend:{name:'천궁토끼', tags:['전설 도약']}
-  },
-  dragon: {
-    common:{name:'비룡', tags:['중후반 진입']},
-    rare:{name:'청룡', tags:['희귀 용족']},
-    epic:{name:'영룡', tags:['영웅 기세']},
-    legend:{name:'황룡', tags:['전설 단계']}
-  },
-  snake: {
-    common:{name:'맹독사', tags:['긴장 구간']},
-    rare:{name:'청사', tags:['희귀 독기']},
-    epic:{name:'영사', tags:['영웅 집중']},
-    legend:{name:'신사', tags:['전설 후반']}
-  },
-  horse: {
-    common:{name:'질주마', tags:['후반 진입']},
-    rare:{name:'적토마', tags:['희귀 속도']},
-    epic:{name:'천마', tags:['영웅 질주']},
-    legend:{name:'성마', tags:['전설 가속']}
-  },
-  goat: {
-    common:{name:'산양', tags:['버티기 구간']},
-    rare:{name:'영양', tags:['희귀 집중']},
-    epic:{name:'광양', tags:['영웅 시도']},
-    legend:{name:'신양', tags:['전설 희소']}
-  },
-  monkey: {
-    common:{name:'재주꾼 원숭이', tags:['변수 많음']},
-    rare:{name:'영후', tags:['희귀 흔들기']},
-    epic:{name:'천후', tags:['영웅 난도']},
-    legend:{name:'신후', tags:['전설 상위']}
-  },
-  rooster: {
-    common:{name:'전투닭', tags:['극후반']},
-    rare:{name:'금계', tags:['희귀 장벽']},
-    epic:{name:'봉계', tags:['영웅 벽']},
-    legend:{name:'천계', tags:['전설 끝자락']}
-  },
-  dog: {
-    common:{name:'충견', tags:['최종 관문']},
-    rare:{name:'영견', tags:['희귀 최종 관문']},
-    epic:{name:'천견', tags:['영웅 1% 도전']},
-    legend:{name:'신견', tags:['전설 0.5% 도전']}
-  },
-  pig: {
-    legend:{name:'복돼지', tags:['미션 달성']}
-  }
-};
-
-const state = {
-  attempt:1,
-  stage:1,
-  combo:0,
-  failCount:0,
-  bestStage:1,
-  currentCard:null,
-  resultHistory:[],
-  pendingResult:null,
-  afterCloseAction:null,
-  reviveAvailable:false,
-  reviveGrantedRun:false,
-  reviveSnapshot:null
-};
-
-const RARITY_ORDER = ['common','rare','epic','legend'];
-function rarityLabel(key){ return (RARITY_META[key] || {}).label || '일반'; }
-function downgradeRarity(key){ const idx = RARITY_ORDER.indexOf(key); return idx <= 0 ? 'common' : RARITY_ORDER[idx - 1]; }
-function stageDef(){ return STAGES[state.stage - 1]; }
-function cardForStage(stage, rarity){
-  const base = STAGES[stage - 1];
-  if(base.id === 'pig'){
-    const data = VARIANTS.pig.legend;
-    return {...base, rarity:'legend', ...data, ...{success:0, stay:0, fail:0}};
-  }
-  const variant = (VARIANTS[base.id] && VARIANTS[base.id][rarity]) || (VARIANTS[base.id] && VARIANTS[base.id].common) || {};
-  const rate = RATE_TABLE[rarity][stage - 1];
-  return {...base, rarity, ...variant, ...rate};
-}
-function formatPercent(value){
-  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
-}
-function weightedRarity(){
-  const entries = Object.entries(RARITY_META);
-  const total = entries.reduce((sum, [,v]) => sum + v.weight, 0);
-  let roll = Math.random() * total;
-  for(const [key, meta] of entries){
-    roll -= meta.weight;
-    if(roll < 0) return key;
-  }
-  return 'common';
-}
-function spawnCard(){
-  const base = stageDef();
-  if(base.id === 'pig'){
-    return cardForStage(state.stage, 'legend');
-  }
-  const rarity = weightedRarity();
-  return cardForStage(state.stage, rarity);
-}
-function saveBest(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({bestStage: state.bestStage}));
-}
-function loadBest(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    const d = JSON.parse(raw);
-    state.bestStage = Math.max(1, d.bestStage || 1);
-  }catch(e){}
-}
-function loadResultHistory(){
-  try{
-    const raw = localStorage.getItem(RESULT_HISTORY_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){ return []; }
-}
-function saveResultHistory(){
-  localStorage.setItem(RESULT_HISTORY_KEY, JSON.stringify(state.resultHistory || []));
-}
-function setFooter(title, pill, desc){
-  document.getElementById('footerTitle').textContent = title;
-  document.getElementById('footerPill').textContent = pill;
-  document.getElementById('footerDesc').textContent = desc;
-}
-function renderTop(){
-  document.getElementById('attemptValue').textContent = state.attempt;
-  document.getElementById('stageValue').textContent = state.stage;
-  document.getElementById('currentAnimalMini').textContent = stageDef().baseName;
-  document.getElementById('comboValue').textContent = state.combo;
-  document.getElementById('failCountValue').textContent = state.failCount;
-  document.getElementById('reviveValue').textContent = state.reviveAvailable ? '보유' : '없음';
-  document.getElementById('bestValue').textContent = STAGES[state.bestStage - 1].baseName;
-}
-function renderCard(){
-  const c = state.currentCard;
-  document.getElementById('stagePill').textContent = `${state.stage}단계`;
-  const rarity = document.getElementById('rarityPill');
-  rarity.className = `rarity-pill ${c.rarity}`;
-  rarity.textContent = rarityLabel(c.rarity);
-  document.getElementById('animalEmoji').textContent = c.emoji;
-  document.getElementById('animalName').textContent = c.name;
-  document.getElementById('animalDesc').textContent = `${c.baseName} 단계 · ${rarityLabel(c.rarity)} 등급입니다. 성공하면 ${c.next}로 이동하고, 유지가 나오면 이전 동물로 한 단계 하락합니다. 실패하면 다시 쥐부터 시작하지만, 부활권이 있으면 현재 동물 상태로 1회 부활합니다.`;
-  document.getElementById('successRate').textContent = formatPercent(c.success);
-  document.getElementById('stayRate').textContent = formatPercent(c.stay || 0);
-  document.getElementById('failRate').textContent = formatPercent(c.fail);
-
-  const tags = [];
-  if(c.rarity === 'legend') tags.push(['전설 확률','bad']);
-  else if(c.rarity === 'epic') tags.push(['영웅 확률','warn']);
-  else if(c.rarity === 'rare') tags.push(['희귀 확률','warn']);
-  else tags.push(['일반 확률','good']);
-
-  if(c.success >= 80) tags.push(['승급 강추천','good']);
-  else if(c.success >= 40) tags.push(['도전 가능','warn']);
-  else tags.push(['신중 구간','bad']);
-
-  if((c.stay || 0) > 0) tags.push([`유지 ${formatPercent(c.stay)} 시 이전 동물 하락`,'warn']);
-  if(state.reviveAvailable) tags.push(['부활권 보유 중','good']);
-  else if(state.combo >= 2) tags.push(['다음 성공 시 부활권','warn']);
-
-  if(state.stage >= 10) tags.push(['후반 극악 난도','warn']);
-  if(state.stage === 11) tags.push([`${rarityLabel(c.rarity)} 개→돼지 ${formatPercent(c.success)}`,'bad']);
-  (c.tags || []).forEach(tag => tags.push([tag, '']));
-  document.getElementById('cardTags').innerHTML = tags.map(([t, cls]) => `<span class="tag ${cls}">${t}</span>`).join('');
-}
-function buildProbabilityHtml(){
-  return Object.entries(RARITY_META).map(([rarityKey, meta]) => {
-    const rows = STAGES.slice(0, 11).map((stage, idx) => {
-      const rate = RATE_TABLE[rarityKey][idx];
-      return `<tr>
-        <td>${stage.baseName} → ${stage.next}</td>
-        <td class="success mono">${formatPercent(rate.success)}</td>
-        <td class="stay mono">${formatPercent(rate.stay || 0)}</td>
-        <td class="fail mono">${formatPercent(rate.fail)}</td>
-      </tr>`;
-    }).join('');
-    return `<div class="probability-group ${meta.className}">
-      <div class="group-title">[${meta.label}]</div>
-      <div class="probability-table-wrap">
-        <table class="probability-table">
-          <thead>
-            <tr>
-              <th>구간</th>
-              <th>성공</th>
-              <th>유지</th>
-              <th>실패</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <div class="probability-note">${meta.label} 등급일수록 유지·실패 부담이 커집니다. 유지가 나오면 이전 동물로 하락하며, 개 → 돼지 구간도 유지 판정이 적용됩니다.</div>
-    </div>`;
-  }).join('');
-}
-function renderRules(){
-  document.getElementById('probabilityTable').innerHTML = buildProbabilityHtml();
-
-  if(state.stage <= 3) setFooter('초반은 비교적 쉽지만', `${state.stage}단계`, '초반에도 희귀·영웅·전설이 나오면 성공 확률이 더 낮습니다.');
-  else if(state.stage <= 7) setFooter('중반부터 난도가 올라갑니다', `${state.stage}단계`, '토끼 이후부터는 유지가 나오면 이전 동물로 한 단계 하락합니다. 3콤보를 넘기면 부활권 1개가 생성됩니다.');
-  else if(state.stage <= 10) setFooter('후반 도전 구간입니다', `${state.stage}단계`, '양·원숭이·닭 구간은 높은 등급일수록 성공이 더 낮고 유지·실패 리스크가 커집니다. 부활권이 있으면 실패한 동물에서 한 번 다시 도전합니다.');
-  else {
-    const c = state.currentCard;
-    setFooter('최종 관문입니다', `${state.stage}단계`, `개에서 돼지 승급은 현재 ${rarityLabel(c.rarity)} 등급 기준 성공 ${formatPercent(c.success)}, 유지 ${formatPercent(c.stay || 0)}, 실패 ${formatPercent(c.fail)}입니다.`);
-  }
-}
-function renderRecentHistory(){
-  const root = document.getElementById('recentHistoryList');
-  const list = state.resultHistory || [];
-  if(!list.length){
-    root.innerHTML = '<div class="item"><div class="sub">아직 기록이 없습니다. 성공 또는 실패 결과창을 닫으면 여기에 최근 기록이 남습니다.</div></div>';
-    return;
-  }
-  root.innerHTML = list.map((x, idx) => {
-    const isWin = x.type === 'win';
-    const title = isWin ? '미션 달성' : '실패 후 초기화';
-    return `
-      <div class="history-card ${isWin ? 'win' : 'lose'}">
-        <div class="history-head">
-          <div class="history-badge ${isWin ? 'win' : 'lose'}">${isWin ? '🏆' : '💀'} ${title}</div>
-          <div class="history-step">${idx + 1}번째 최근 기록</div>
+      <div class="card">
+        <h2 class="section-title">결과 요약</h2>
+        <div class="result-grid">
+          <div class="metric">
+            <div class="k">표시용 점수</div>
+            <div class="v" id="humanScore">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">Scaled Score</div>
+            <div class="v" id="scaledScore">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">입력 해시</div>
+            <div class="v mono" id="inputHash">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">증명 상태</div>
+            <div class="v" id="verifyStatus">-</div>
+          </div>
         </div>
-        <div class="history-reason">${x.reason}</div>
-        <div class="history-meta">
-          <div class="history-mini"><div class="k">도달 단계</div><div class="v">${x.stage}단계</div></div>
-          <div class="history-mini"><div class="k">마지막 동물</div><div class="v">${x.animal}</div></div>
-          <div class="history-mini"><div class="k">마지막 등급</div><div class="v">${x.rarityLabel}</div></div>
-          <div class="history-mini"><div class="k">도전 횟수</div><div class="v">${x.attempt}</div></div>
-        </div>
-      </div>`;
-  }).join('');
-}
-function renderAll(){
-  renderTop();
-  renderCard();
-  renderRules();
-  renderRecentHistory();
-}
+        <div class="terminal mono" id="logArea">준비됨. 컨트랙트 주소를 넣고 지갑 연결 또는 컨트랙트 로드를 실행하세요.</div>
+      </div>
+    </section>
+  </div>
 
-function maybeGrantRevive(){
-  if(state.combo >= 3 && !state.reviveAvailable && !state.reviveGrantedRun){
-    state.reviveAvailable = true;
-    state.reviveGrantedRun = true;
-    return true;
-  }
-  return false;
-}
-function snapshotCurrentCard(current){
-  return {
-    stage: state.stage,
-    combo: state.combo,
-    card: {...current}
-  };
-}
-function startStage(){
-  state.currentCard = spawnCard();
-  renderAll();
-}
-function recordPendingResult(){
-  if(!state.pendingResult) return;
-  state.resultHistory = [state.pendingResult, ...(state.resultHistory || [])].slice(0, 8);
-  state.pendingResult = null;
-  saveResultHistory();
-  renderRecentHistory();
-}
-function spawnResultBurst(type){
-  const burst = document.getElementById('resultBurst');
-  burst.innerHTML = '';
-  const total = type === 'win' ? 18 : 12;
-  for(let i=0;i<total;i++){
-    const piece = document.createElement('span');
-    const angle = (360 / total) * i + (type === 'win' ? 6 : 0);
-    const distance = type === 'win' ? 54 + (i % 4) * 10 : 36 + (i % 3) * 10;
-    const rad = angle * Math.PI / 180;
-    const tx = Math.cos(rad) * distance;
-    const ty = Math.sin(rad) * distance;
-    const spark = type === 'win' && i % 3 === 0;
-    piece.className = `fx-piece ${spark ? 'spark' : ''}`;
-    piece.style.setProperty('--tx', `${tx}px`);
-    piece.style.setProperty('--ty', `${ty}px`);
-    piece.style.setProperty('--rot', `${angle}deg`);
-    piece.style.background = type === 'win'
-      ? (spark ? 'rgba(253,224,71,.95)' : (i % 2 ? 'rgba(134,239,172,.95)' : 'rgba(255,255,255,.95)'))
-      : (spark ? 'rgba(252,165,165,.9)' : (i % 2 ? 'rgba(248,113,113,.92)' : 'rgba(255,255,255,.75)'));
-    piece.style.color = piece.style.background;
-    piece.style.animationDelay = `${i * 0.018}s`;
-    burst.appendChild(piece);
-  }
-}
+  <script>
+    const ABI = [
+      "function score((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x) view returns (uint256 scaledScore)",
+      "function scoreHuman((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x) view returns (uint256 integerPart, uint256 decimalPart4)",
+      "function scoreBreakdown((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x) view returns ((uint8 biomeCode,uint8 terrainCode,uint8 combatCode,uint256 battleSeed,int256 eVal,uint256 fVal,int256 gVal,int256 hVal,int256 iVal,int256 jVal,uint256 scaledScore))",
+      "function verify((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x, uint256 expectedScaledScore) view returns (bool ok, bytes32 inputHash, bytes32 outputHash, uint256 actualScaledScore)",
+      "function storeProof((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x, uint256 expectedScaledScore) returns (bytes32 proofId)",
+      "function hashInput((uint8 beastId,uint256 prevSeedA,uint256 prevSeedB,uint256 nextSeedA,uint256 nextSeedB,uint8 pulse) x) view returns (bytes32)",
+      "function rulesetHash() view returns (bytes32)",
+      "event ProofStored(bytes32 indexed proofId, bytes32 indexed inputHash, bytes32 outputHash, uint8 beastId, uint256 scaledScore, address indexed submitter)"
+    ];
 
-function showResult(type, message, reason){
-  const overlay = document.getElementById('resultOverlay');
-  const modal = overlay.querySelector('.modal');
-  const hero = document.getElementById('resultHero');
-  const title = document.getElementById('resultTitle');
-  const emoji = document.getElementById('resultEmoji');
-  const msg = document.getElementById('resultMessage');
-  const closeBtn = document.getElementById('resultCloseBtn');
-  const c = state.currentCard || stageDef();
+    let provider = null;
+    let signer = null;
+    let contract = null;
 
-  modal.className = `modal ${type}`;
+    const $ = (id) => document.getElementById(id);
 
-  if(type === 'win'){
-    title.textContent = '미션을 달성하셨습니다.';
-    hero.className = 'hero win';
-    emoji.textContent = '🏆';
-    msg.textContent = message;
-    closeBtn.textContent = '다시 시작';
-  }else if(type === 'stay'){
-    title.textContent = '등급이 하락했습니다.';
-    hero.className = 'hero stay';
-    emoji.textContent = '↘️';
-    msg.textContent = message;
-    closeBtn.textContent = '이어하기';
-  }else if(type === 'revive'){
-    title.textContent = '부활권이 발동했습니다.';
-    hero.className = 'hero win';
-    emoji.textContent = '🪽';
-    msg.textContent = message;
-    closeBtn.textContent = '부활하기';
-  }else{
-    title.textContent = '실패했습니다.';
-    hero.className = 'hero lose';
-    emoji.textContent = '💥';
-    msg.textContent = message;
-    closeBtn.textContent = '다시 시작';
-  }
+    function appendLog(message, type = "info") {
+      const area = $("logArea");
+      const time = new Date().toLocaleTimeString();
+      const prefix = type === "error" ? "[ERROR]" : type === "ok" ? "[OK]" : "[INFO]";
+      area.textContent = `[${time}] ${prefix} ${message}\n` + area.textContent;
+    }
 
-  spawnResultBurst(type === 'stay' || type === 'revive' ? 'win' : type);
-  document.getElementById('resultLine1').textContent = reason;
-  document.getElementById('resultLine2').textContent = `마지막 동물: ${c.baseName} · ${rarityLabel(c.rarity)}`;
-  document.getElementById('resultLine3').textContent = type === 'win'
-    ? '결과창을 닫으면 다시 쥐부터 새 도전이 시작됩니다.'
-    : (type === 'stay'
-        ? '결과창을 닫으면 이전 동물로 하락한 상태에서 다음 승급을 이어갑니다.'
-        : (type === 'revive'
-            ? '결과창을 닫으면 방금 실패했던 동물과 등급 상태에서 즉시 재도전합니다.'
-            : '결과창을 닫으면 다시 쥐부터 시작합니다.'));
-  document.getElementById('resultStageScore').textContent = `${state.stage}단계`;
-  document.getElementById('resultComboScore').textContent = `${state.combo}`;
-  document.getElementById('resultFailScore').textContent = `${state.failCount}`;
-  document.getElementById('resultAttemptScore').textContent = `${state.attempt}`;
-  overlay.classList.add('show');
-}
-function resetRun(){
-  state.stage = 1;
-  state.combo = 0;
-  state.attempt += 1;
-  state.reviveAvailable = false;
-  state.reviveGrantedRun = false;
-  state.reviveSnapshot = null;
-  startStage();
-}
-function continueStage(){
-  document.getElementById('resultOverlay').classList.remove('show');
-  state.pendingResult = null;
-  renderAll();
-}
+    function setStatus(id, text) {
+      $(id).textContent = text;
+    }
 
-function reviveStage(){
-  document.getElementById('resultOverlay').classList.remove('show');
-  if(state.reviveSnapshot){
-    state.stage = state.reviveSnapshot.stage;
-    state.combo = state.reviveSnapshot.combo;
-    state.currentCard = {...state.reviveSnapshot.card};
-  }
-  state.reviveSnapshot = null;
-  state.pendingResult = null;
-  renderAll();
-}
-function closeResultAndRestart(){
-  document.getElementById('resultOverlay').classList.remove('show');
-  const mode = state.afterCloseAction || 'restart';
-  if(mode === 'continue'){
-    state.afterCloseAction = null;
-    continueStage();
-    return;
-  }
-  if(mode === 'revive'){
-    state.afterCloseAction = null;
-    reviveStage();
-    return;
-  }
-  recordPendingResult();
-  state.afterCloseAction = null;
-  resetRun();
-}
-function makeHistoryEntry(type, current, reason){
-  return {
-    type,
-    stage: state.stage,
-    animal: current.baseName,
-    rarity: current.rarity,
-    rarityLabel: rarityLabel(current.rarity),
-    combo: state.combo,
-    attempt: state.attempt,
-    reason
-  };
-}
-function upgradeAction(){
-  const current = state.currentCard;
-  const roll = Math.random() * 100;
+    function formatDecimal4(integerPart, decimalPart4) {
+      return `${integerPart}.${String(decimalPart4).padStart(4, "0")}`;
+    }
 
-  if(roll < current.success){
-    state.combo += 1;
-    const grantedRevive = maybeGrantRevive();
-    state.stage += 1;
-    state.bestStage = Math.max(state.bestStage, state.stage);
-    saveBest();
-
-    if(state.stage === 12){
-      state.currentCard = spawnCard();
-      state.pendingResult = {
-        type:'win',
-        stage:12,
-        animal:'돼지',
-        rarity:'legend',
-        rarityLabel:'전설',
-        combo:state.combo,
-        attempt:state.attempt,
-        reason:`${rarityLabel(current.rarity)} 등급 개에서 돼지 승급에 성공했습니다.${grantedRevive ? ' 이번 도전에서 사용할 부활권도 확보한 상태였습니다.' : ''}`
+    function toInputObject() {
+      return {
+        beastId: Number($("beastId").value),
+        prevSeedA: BigInt($("prevSeedA").value.trim()),
+        prevSeedB: BigInt($("prevSeedB").value.trim()),
+        nextSeedA: BigInt($("nextSeedA").value.trim()),
+        nextSeedB: BigInt($("nextSeedB").value.trim()),
+        pulse: Number($("pulse").value)
       };
-      state.afterCloseAction = 'restart';
-      showResult('win', '돼지가 만들어졌습니다. 미션을 달성하셨습니다.', `마지막 개 → 돼지 승급에 성공했습니다. 현재 등급 성공 확률은 ${formatPercent(current.success)}였습니다.`);
-      return;
     }
 
-    startStage();
-    if(grantedRevive){
-      document.getElementById('footerDesc').textContent = '3콤보를 달성해 부활권 1개를 획득했습니다. 이번 도전에서 첫 실패 시 현재 동물 상태로 1회 부활합니다.';
+    function requireContract(readOnly = true) {
+      if (!contract) throw new Error("컨트랙트가 로드되지 않았습니다.");
+      if (!readOnly && !signer) throw new Error("트랜잭션 실행을 위해 지갑 연결이 필요합니다.");
     }
-    return;
-  }
 
-  if(roll < current.success + (current.stay || 0)){
-    const prevStage = Math.max(1, state.stage - 1);
-    const prevAnimal = STAGES[prevStage - 1].baseName;
-    state.stage = prevStage;
-    state.currentCard = cardForStage(state.stage, current.rarity);
-    state.afterCloseAction = 'continue';
-    const dropText = `${current.baseName} → ${prevAnimal} 단계로 하락했습니다.`;
-    showResult('stay', `${current.baseName} 단계에서 유지 판정이 나왔습니다.`, `유지 확률 ${formatPercent(current.stay || 0)}에 걸렸습니다. ${dropText}`);
-    return;
-  }
+    async function connectWallet() {
+      if (!window.ethereum) {
+        appendLog("MetaMask가 설치되어 있지 않습니다.", "error");
+        return;
+      }
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      const network = await provider.getNetwork();
+      setStatus("walletBadge", `${address.slice(0, 6)}...${address.slice(-4)}`);
+      setStatus("networkBadge", `${network.name} (${network.chainId})`);
+      appendLog(`지갑 연결 완료: ${address}`, "ok");
+      await loadContract();
+    }
 
-  state.failCount += 1;
+    async function loadContract() {
+      const address = $("contractAddress").value.trim();
+      if (!address) {
+        appendLog("컨트랙트 주소를 먼저 입력하세요.", "error");
+        return;
+      }
+      try {
+        if (!provider) provider = window.ethereum ? new ethers.BrowserProvider(window.ethereum) : ethers.getDefaultProvider();
+        contract = new ethers.Contract(address, ABI, signer || provider);
+        const ruleset = await contract.rulesetHash();
+        setStatus("rulesetBadge", `${ruleset.slice(0, 10)}...${ruleset.slice(-8)}`);
+        appendLog(`컨트랙트 로드 완료: ${address}`, "ok");
+      } catch (err) {
+        appendLog(`컨트랙트 로드 실패: ${err.message}`, "error");
+      }
+    }
 
-  if(state.reviveAvailable){
-    state.reviveAvailable = false;
-    state.reviveSnapshot = snapshotCurrentCard(current);
-    state.pendingResult = null;
-    state.afterCloseAction = 'revive';
-    showResult('revive', `${current.baseName} 단계에서 실패했지만 부활권이 발동했습니다.`, `부활권이 소모되어 ${current.baseName} · ${rarityLabel(current.rarity)} 상태로 즉시 복구됩니다.`);
-    return;
-  }
+    async function runScoreHuman() {
+      try {
+        requireContract(true);
+        const x = toInputObject();
+        const [integerPart, decimalPart4] = await contract.scoreHuman(x);
+        const human = formatDecimal4(integerPart.toString(), decimalPart4.toString());
+        $("humanScore").textContent = human;
+        appendLog(`표시용 점수 조회 완료: ${human}`, "ok");
+      } catch (err) {
+        appendLog(`scoreHuman 실패: ${err.message}`, "error");
+      }
+    }
 
-  state.pendingResult = makeHistoryEntry('lose', current, `${current.baseName} 단계의 ${rarityLabel(current.rarity)} 등급 승급에 실패하여 다시 쥐부터 시작했습니다.`);
-  state.afterCloseAction = 'restart';
-  showResult('lose', `${current.baseName} 단계에서 실패했습니다. 다시 쥐부터 시작합니다.`, `현재 단계 성공 ${formatPercent(current.success)} / 유지 ${formatPercent(current.stay || 0)} / 실패 ${formatPercent(current.fail)}였습니다.`);
-}
+    async function runScore() {
+      try {
+        requireContract(true);
+        const x = toInputObject();
+        const scaled = await contract.score(x);
+        $("scaledScore").textContent = scaled.toString();
+        const inputHash = await contract.hashInput(x);
+        $("inputHash").textContent = inputHash;
+        appendLog(`Scaled score 조회 완료: ${scaled.toString()}`, "ok");
+      } catch (err) {
+        appendLog(`score 실패: ${err.message}`, "error");
+      }
+    }
 
-document.getElementById('upgradeBtn').addEventListener('click', upgradeAction);
-document.getElementById('resultCloseBtn').addEventListener('click', closeResultAndRestart);
+    async function runBreakdown() {
+      try {
+        requireContract(true);
+        const x = toInputObject();
+        const r = await contract.scoreBreakdown(x);
+        const data = {
+          biomeCode: r.biomeCode?.toString?.() ?? String(r[0]),
+          terrainCode: r.terrainCode?.toString?.() ?? String(r[1]),
+          combatCode: r.combatCode?.toString?.() ?? String(r[2]),
+          battleSeed: r.battleSeed?.toString?.() ?? String(r[3]),
+          eVal: r.eVal?.toString?.() ?? String(r[4]),
+          fVal: r.fVal?.toString?.() ?? String(r[5]),
+          gVal: r.gVal?.toString?.() ?? String(r[6]),
+          hVal: r.hVal?.toString?.() ?? String(r[7]),
+          iVal: r.iVal?.toString?.() ?? String(r[8]),
+          jVal: r.jVal?.toString?.() ?? String(r[9]),
+          scaledScore: r.scaledScore?.toString?.() ?? String(r[10])
+        };
+        $("scaledScore").textContent = data.scaledScore;
+        appendLog(`Breakdown\n${JSON.stringify(data, null, 2)}`, "ok");
+      } catch (err) {
+        appendLog(`scoreBreakdown 실패: ${err.message}`, "error");
+      }
+    }
 
-state.resultHistory = loadResultHistory();
-loadBest();
-startStage();
-</script>
+    async function runVerify() {
+      try {
+        requireContract(true);
+        const x = toInputObject();
+        const expected = BigInt($("expectedScore").value.trim());
+        const result = await contract.verify(x, expected);
+        const ok = result.ok ?? result[0];
+        const inputHash = (result.inputHash ?? result[1]).toString();
+        const outputHash = (result.outputHash ?? result[2]).toString();
+        const actual = (result.actualScaledScore ?? result[3]).toString();
+
+        $("verifyStatus").innerHTML = ok ? '<span class="ok">MATCH</span>' : '<span class="bad">MISMATCH</span>';
+        $("inputHash").textContent = inputHash;
+        $("scaledScore").textContent = actual;
+        appendLog(`Verify 결과\nok=${ok}\nactual=${actual}\ninputHash=${inputHash}\noutputHash=${outputHash}`, ok ? "ok" : "error");
+      } catch (err) {
+        appendLog(`verify 실패: ${err.message}`, "error");
+      }
+    }
+
+    async function runStoreProof() {
+      try {
+        requireContract(false);
+        const x = toInputObject();
+        const expected = BigInt($("expectedScore").value.trim());
+        const tx = await contract.storeProof(x, expected);
+        appendLog(`Proof 저장 트랜잭션 전송: ${tx.hash}`, "ok");
+        const receipt = await tx.wait();
+        appendLog(`Proof 저장 완료. block=${receipt.blockNumber}`, "ok");
+      } catch (err) {
+        appendLog(`storeProof 실패: ${err.reason || err.message}`, "error");
+      }
+    }
+
+    $("connectBtn").addEventListener("click", connectWallet);
+    $("loadContractBtn").addEventListener("click", loadContract);
+    $("scoreHumanBtn").addEventListener("click", runScoreHuman);
+    $("scoreBtn").addEventListener("click", runScore);
+    $("breakdownBtn").addEventListener("click", runBreakdown);
+    $("verifyBtn").addEventListener("click", runVerify);
+    $("proofBtn").addEventListener("click", runStoreProof);
+  </script>
 </body>
 </html>
